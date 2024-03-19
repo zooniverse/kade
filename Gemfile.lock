@@ -191,9 +191,9 @@ GEM
       net-protocol
     newrelic_rpm (9.7.0)
     nio4r (2.7.0)
-    nokogiri (1.14.3-x86_64-darwin)
+    nokogiri (1.16.3-x86_64-darwin)
       racc (~> 1.4)
-    nokogiri (1.14.3-x86_64-linux)
+    nokogiri (1.16.3-x86_64-linux)
       racc (~> 1.4)
     panoptes-client (1.2.0)
       deprecate
@@ -217,7 +217,7 @@ GEM
     puma (6.4.2)
       nio4r (~> 2.0)
     raabro (1.4.0)
-    racc (1.6.2)
+    racc (1.7.3)
     rack (2.2.8)
     rack-cors (2.0.1)
       rack (>= 2.0.0)
