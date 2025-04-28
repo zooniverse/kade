@@ -144,6 +144,10 @@ module Bajor
       .merge(overrides)
       .compact.tap do |o|
         o[:run_opts] = "--schema #{o[:workflow_name].downcase}"
+        if o[:fixed_crop].present?
+          o[:run_opts] += " --fixed_crop #{o[:fixed_crop].to_json}"
+          o.delete(:fixed_crop)
+        end
       end
     end
   end
