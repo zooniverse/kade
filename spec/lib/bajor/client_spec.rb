@@ -138,8 +138,7 @@ RSpec.describe Bajor::Client do
       it 'sends jswt_cosmos workflow and fixed_crop settings' do
         bajor_client.create_training_job(
           catalogue_manifest_path,
-          workflow_name: workflow_name,
-          fixed_crop: fixed_crop
+          { workflow_name: workflow_name, fixed_crop: fixed_crop}
         )
         expect(
           a_request(:post, request_url)
@@ -284,8 +283,7 @@ RSpec.describe Bajor::Client do
       it 'sends jswt_cosmos workflow and fixed_crop settings' do
         bajor_client.create_prediction_job(
           manifest_url,
-          workflow_name: workflow_name,
-          fixed_crop: fixed_crop
+          { workflow_name: workflow_name, fixed_crop: fixed_crop }
         )
         expect(
           a_request(:post, request_url)
