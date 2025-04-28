@@ -94,12 +94,58 @@ RSpec.describe Bajor::Client do
       end
 
       it 'sends the right workflow name' do
-        bajor_client.create_training_job(catalogue_manifest_path, workflow_name)
+        bajor_client.create_training_job(catalogue_manifest_path, { workflow_name: workflow_name })
         expect(
           a_request(:post, request_url).with(body: request_body, headers: request_headers)
         ).to have_been_made.once
       end
 
+    end
+
+    context 'with jswt_cosmos workflow and fixed crop' do
+      let(:workflow_name) { 'jswt_cosmos' }
+      let(:run_opts)      { '--schema jswt_cosmos' }
+      let(:fixed_crop) do
+        {
+          lower_left_x:  30,
+          lower_left_y:  30,
+          upper_right_x: 750,
+          upper_right_y: 750
+        }
+      end
+
+      let(:request_body) do
+        {
+          manifest_path: catalogue_manifest_path,
+          opts: {
+            workflow_name: workflow_name,
+            run_opts: run_opts,
+            fixed_crop: fixed_crop
+          }
+        }
+      end
+
+      before do
+        stub_request(:post, request_url)
+          .with(body: request_body, headers: request_headers)
+          .to_return(
+            status: 201,
+            body: bajor_response_body.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      it 'sends jswt_cosmos workflow and fixed_crop settings' do
+        bajor_client.create_training_job(
+          catalogue_manifest_path,
+          workflow_name: workflow_name,
+          fixed_crop: fixed_crop
+        )
+        expect(
+          a_request(:post, request_url)
+            .with(body: request_body, headers: request_headers)
+        ).to have_been_made.once
+      end
     end
 
     context 'with a failed repsonse' do
@@ -126,8 +172,15 @@ RSpec.describe Bajor::Client do
   describe 'create_prediction_job' do
     let(:request_url) { "#{bajor_host}/prediction/jobs/" }
     let(:manifest_url) { 'https://manifest-host.zooniverse.org/manifest.csv' }
+    let(:run_opts) { '--schema cosmic_dawn' }
     let(:request_body) do
-      { manifest_url: manifest_url, opts: { workflow_name: workflow_name} }
+      {
+        manifest_url: manifest_url,
+        opts: {
+          workflow_name: workflow_name,
+          run_opts: run_opts
+        }
+      }
     end
     let(:job_id) { '3ed68115-dc36-4f66-838c-a52869031c9c' }
     let(:bajor_response_body) do
@@ -172,7 +225,7 @@ RSpec.describe Bajor::Client do
       let(:run_opts) { '--schema euclid' }
 
       let(:request_body) do
-        { manifest_url: manifest_url, opts: { workflow_name: workflow_name} }
+        { manifest_url: manifest_url, opts: { workflow_name:, run_opts:} }
       end
 
       let(:request) do
@@ -188,12 +241,55 @@ RSpec.describe Bajor::Client do
       end
 
       it 'sends the right workflow name' do
-
-        bajor_client.create_prediction_job(manifest_url, 'euclid')
-
-
+        bajor_client.create_prediction_job(manifest_url, { workflow_name:, run_opts: })
         expect(
           a_request(:post, request_url).with(body: request_body, headers: request_headers)
+        ).to have_been_made.once
+      end
+    end
+
+    context 'with jswt_cosmos workflow and fixed crop' do
+      let(:workflow_name) { 'jswt_cosmos' }
+      let(:run_opts)      { '--schema jswt_cosmos' }
+      let(:fixed_crop) do
+        {
+          lower_left_x:  30,
+          lower_left_y:  30,
+          upper_right_x: 750,
+          upper_right_y: 750
+        }
+      end
+
+      let(:request_body) do
+        {
+          manifest_url: manifest_url,
+          opts: {
+            workflow_name: workflow_name,
+            run_opts: run_opts,
+            fixed_crop: fixed_crop
+          }
+        }
+      end
+
+      before do
+        stub_request(:post, request_url)
+          .with(body: request_body, headers: request_headers)
+          .to_return(
+            status: 201,
+            body: bajor_response_body.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      it 'sends jswt_cosmos workflow and fixed_crop settings' do
+        bajor_client.create_prediction_job(
+          manifest_url,
+          workflow_name: workflow_name,
+          fixed_crop: fixed_crop
+        )
+        expect(
+          a_request(:post, request_url)
+            .with(body: request_body, headers: request_headers)
         ).to have_been_made.once
       end
     end

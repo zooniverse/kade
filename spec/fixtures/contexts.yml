@@ -6,6 +6,7 @@ galaxy_zoo_cosmic_active_learning_project:
   pool_subject_set_id: 66
   module_name: 'galaxy_zoo'
   extractor_name: 'cosmic_dawn'
+  metadata: None
 
 galaxy_zoo_euclid_active_learning_project:
   id: 2
@@ -15,3 +16,21 @@ galaxy_zoo_euclid_active_learning_project:
   pool_subject_set_id: 67
   module_name: 'galaxy_zoo'
   extractor_name: 'euclid'
+  metadata: None
+
+galaxy_zoo_cosmos_active_learning_project:
+  id: 3
+  workflow_id: 133
+  project_id: 41
+  active_subject_set_id: 56
+  pool_subject_set_id: 67
+  module_name: 'galaxy_zoo'
+  extractor_name: 'jwst_cosmos'
+  metadata: {
+    'fixed_crop':{
+      'lower_left_x': 30,
+      'lower_left_y': 30,
+      'upper_right_x': 750,
+      'upper_right_y': 750
+    }
+  }
