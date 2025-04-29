@@ -9,11 +9,18 @@ zoobot_training_job:
   description: 'Scheduled Worker to re-train GZ Zoobot on latest data'
   status: <%= Rails.env.production? ? 'enabled' : 'disabled' %> # only enable this in production, manually schedule via the sidekiq UI in other envs
 
-# this file can be used to paramterize RetrainZoobotJob for different contexts (workflow and subject sets)
 zoobot_euclid_training_job:
   cron: "0 10 * * 4" # 10:00 every Thursday https://crontab.guru/#0_10_*_*_4
   class: 'RetrainZoobotJob'
   queue: 'high'
   args: '2' # the context_id to train on (holds the workflow, active and pool subject set ids)
   description: 'Scheduled Worker to re-train GZ Zoobot on latest data for euclid workflow'
+  status: <%= Rails.env.production? ? 'enabled' : 'disabled' %> # only enable this in production, manually schedule via the sidekiq UI in other envs
+
+zoobot_jwst_cosmos_training_job:
+  cron: "0 10 * * 4" # 10:00 every Thursday https://crontab.guru/#0_10_*_*_4
+  class: 'RetrainZoobotJob'
+  queue: 'high'
+  args: '3' # the context_id to train on (holds the workflow, active and pool subject set ids)
+  description: 'Scheduled Worker to re-train GZ Zoobot on latest data for jwst cosmos workflow'
   status: <%= Rails.env.production? ? 'enabled' : 'disabled' %> # only enable this in production, manually schedule via the sidekiq UI in other envs
