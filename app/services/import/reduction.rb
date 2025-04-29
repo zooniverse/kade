@@ -86,7 +86,7 @@ module Import
       return unique_id if unique_id
 
       # generic metadata
-      unique_id = subject_metadata['id_str'] || subject_metadata['!id_str'] || subject_metadata['#id_str']
+      unique_id = subject_metadata['id_str'] || subject_metadata['!id_str'] || subject_metadata['#id_str'] || subject_metadata['#id_field']
       return unique_id if unique_id
 
       # staging has older data with different subject metadata - fallback to handling this special env case
