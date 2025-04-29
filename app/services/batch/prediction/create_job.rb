@@ -30,9 +30,13 @@ module Batch
         context = Context.find_by(active_subject_set_id: prediction_job.subject_set_id)
         return {} unless context
 
+        fixed_crop = if context.metadata.is_a?(Hash) && context.metadata['fixed_crop'].is_a?(Hash)
+          context.metadata['fixed_crop']
+        end
+
         {
           workflow_name: context.extractor_name,
-          fixed_crop: context.metadata['fixed_crop'],
+          fixed_crop: fixed_crop,
         }.compact
       end
     end
