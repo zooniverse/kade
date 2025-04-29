@@ -20,6 +20,12 @@ RSpec.describe Batch::Prediction::CreateJob do
     let(:bajor_client_double) { instance_double(Bajor::Client) }
     let(:prediction_create_job) { described_class.new(prediction_job, bajor_client_double) }
     let(:job_service_url) { 'https://bajor-host/prediction/job/123' }
+    let(:prediction_options){
+      {
+        workflow_name: context.extractor_name,
+        fixed_crop: context.metadata['fixed_crop'],
+      }.compact
+    }
 
     context 'when bajor submission succeeds' do
       before do
@@ -36,7 +42,7 @@ RSpec.describe Batch::Prediction::CreateJob do
 
       it 'calls the bajor client service to create a prediction job' do
         prediction_create_job.run
-        expect(bajor_client_double).to have_received(:create_prediction_job).with(manifest_url, context.extractor_name).once
+        expect(bajor_client_double).to have_received(:create_prediction_job).with(manifest_url, prediction_options).once
       end
 
       describe 'prediction_job with active_subject_set_id' do
@@ -53,7 +59,7 @@ RSpec.describe Batch::Prediction::CreateJob do
 
         it 'calls the bajor client service with workflow name from active_subject_set_id' do
           described_class.new(prediction_job, bajor_client_double).run
-          expect(bajor_client_double).to have_received(:create_prediction_job).with(manifest_url, context.extractor_name).once
+          expect(bajor_client_double).to have_received(:create_prediction_job).with(manifest_url, prediction_options).once
         end
       end
 

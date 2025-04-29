@@ -9,6 +9,7 @@ module Bajor
     class TrainingJobTaskError < StandardError; end
 
     JSON_HEADERS = { 'Content-Type' => 'application/json', 'Accept' => 'application/json' }.freeze
+    DEFAULT_OPTIONS = { workflow_name: 'cosmic_dawn' }.freeze
 
     include HTTParty
 
@@ -20,12 +21,12 @@ module Bajor
 
     BLOB_STORE_HOST_CONTAINER_URL = 'https://kadeactivelearning.blob.core.windows.net'
 
-    def create_training_job(manifest_path, workflow_name='cosmic_dawn')
+    def create_training_job(manifest_path, training_opts = {})
       bajor_response = self.class.post(
         '/training/jobs/',
         # NOTE: Here we can augment the batch job run options via bajor
         # via the `run_opts: '--wandb --debug'` etc, these could be set via ENV
-        body: { manifest_path: manifest_path, opts: { 'run_opts': "--schema #{workflow_name.downcase}", 'workflow_name': workflow_name } }.to_json,
+        body: { manifest_path: manifest_path, opts: build_opts(training_opts) }.to_json,
         headers: JSON_HEADERS
       )
 
@@ -36,10 +37,10 @@ module Bajor
       bajor_training_job_tracking_url(bajor_response['id'])
     end
 
-    def create_prediction_job(manifest_url, workflow_name='cosmic_dawn')
+    def create_prediction_job(manifest_url, prediction_opts = {})
       bajor_response = self.class.post(
         '/prediction/jobs/',
-        body: { manifest_url: manifest_url, opts: { 'workflow_name': workflow_name } }.to_json,
+        body: { manifest_url: manifest_url, opts: build_opts(prediction_opts) }.to_json,
         headers: JSON_HEADERS
       )
 
@@ -133,6 +134,21 @@ module Bajor
     def bajor_service_host
       service_host_suffix = Rails.env.staging? ? '-staging' : ''
       "https://bajor#{service_host_suffix}.zooniverse.org"
+    end
+
+    def build_opts(options)
+      raw = options.with_indifferent_access
+      overrides = raw.symbolize_keys.slice(:workflow_name, :fixed_crop)
+
+      DEFAULT_OPTIONS
+      .merge(overrides)
+      .compact.tap do |o|
+        o[:run_opts] = "--schema #{o[:workflow_name].downcase}"
+        if o[:fixed_crop].present?
+          o[:run_opts] += " --fixed_crop #{o[:fixed_crop].to_json}"
+          o.delete(:fixed_crop)
+        end
+      end
     end
   end
 end

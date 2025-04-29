@@ -22,8 +22,13 @@ RSpec.describe Batch::Training::CreateJob do
 
     it 'calls the bajor client service with the correct manifest_path' do
       parent_context = Context.find_by(workflow_id: training_job.workflow_id)
+      training_opts = {
+        workflow_name: parent_context.extractor_name,
+        fixed_crop: parent_context.metadata['fixed_crop'],
+      }.compact
+
       training_create_job.run
-      expect(bajor_client_double).to have_received(:create_training_job).with(manifest_path, parent_context.extractor_name).once
+      expect(bajor_client_double).to have_received(:create_training_job).with(manifest_path, training_opts).once
     end
 
     it 'updates the state tracking info on the training job resource' do

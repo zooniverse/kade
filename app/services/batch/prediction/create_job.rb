@@ -14,12 +14,7 @@ module Batch
 
       def run
         begin
-          subject_set_id = prediction_job.subject_set_id
-          context = Context.where(active_subject_set_id: subject_set_id)
-
-          workflow_name = context.first&.extractor_name
-
-          bajor_job_url = bajor_client.create_prediction_job(prediction_job.manifest_url, workflow_name)
+          bajor_job_url = bajor_client.create_prediction_job(prediction_job.manifest_url, prediction_options)
           prediction_job.update(state: :submitted, service_job_url: bajor_job_url, message: '')
         rescue Bajor::Client::Error => e
           Honeybadger.notify(e)
@@ -28,6 +23,17 @@ module Batch
         end
         # return the prediction job as a result object
         prediction_job
+      end
+
+      private
+      def prediction_options
+        context = Context.find_by(active_subject_set_id: prediction_job.subject_set_id)
+        return {} unless context
+
+        {
+          workflow_name: context.extractor_name,
+          fixed_crop: context.metadata['fixed_crop'],
+        }.compact
       end
     end
   end
