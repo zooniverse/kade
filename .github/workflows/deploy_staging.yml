@@ -6,7 +6,8 @@ on:
     types:
       - completed
     branches:
-      - main
+      # - main
+      - jwst-test-deploy-branch
   workflow_dispatch:
 
 jobs:
