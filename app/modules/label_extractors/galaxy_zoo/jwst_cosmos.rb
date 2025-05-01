@@ -8,6 +8,7 @@ module LabelExtractors
       # https://github.com/mwalmsley/galaxy-datasets/blob/a1a653ec7ab228036129acecb6a26b9960dbb5ff/galaxy_datasets/shared/label_metadata.py#L568
       TASK_KEY_LABEL_PREFIXES = {
         'T0' => 'smooth-or-featured',
+        'T1' => 'how-rounded',
         'T2' => 'disk-edge-on',
         'T3' => 'edge-on-bulge',
         'T4' => 'bar',
@@ -23,7 +24,12 @@ module LabelExtractors
         'T0' => {
           '0' => 'smooth',
           '1' => 'featured-or-disk',
-          '2' => 'problem'
+          '2' => 'star-artifact-zoom'
+        },
+        'T1' => {
+          '0' => 'round',
+          '1' => 'in-between',
+          '2' => 'cigar-shaped'
         },
         'T2' => {
           '0' => 'yes',
@@ -76,7 +82,7 @@ module LabelExtractors
         'T19' => {
           '0' => 'star',
           '1' => 'artifact',
-          '2' => 'zoom'
+          '2' => 'bad-zoom'
         }
       }.freeze
 
