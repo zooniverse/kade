@@ -40,7 +40,7 @@ module Bajor
     def create_prediction_job(manifest_url, prediction_opts = {})
       bajor_response = self.class.post(
         '/prediction/jobs/',
-        body: { manifest_url: manifest_url, opts: build_opts(prediction_opts) }.to_json,
+        body: { manifest_url: manifest_url, opts: build_opts(prediction_opts, false) }.to_json,
         headers: JSON_HEADERS
       )
 
@@ -136,18 +136,20 @@ module Bajor
       "https://bajor#{service_host_suffix}.zooniverse.org"
     end
 
-    def build_opts(options)
+    def build_opts(options, include_schema=true)
       raw = options.with_indifferent_access
       overrides = raw.symbolize_keys.slice(:workflow_name, :fixed_crop)
 
       DEFAULT_OPTIONS
       .merge(overrides)
       .compact.tap do |o|
-        o[:run_opts] = "--schema #{o[:workflow_name].downcase}"
+        run_opts = []
+        run_opts << "--schema #{o[:workflow_name].downcase}" if include_schema
         if o[:fixed_crop].present?
-          o[:run_opts] += " --fixed_crop #{o[:fixed_crop].to_json}"
+          run_opts << "--fixed-crop #{o[:fixed_crop].to_json}"
           o.delete(:fixed_crop)
         end
+        o[:run_opts] = run_opts.join(' ') if run_opts.any?
       end
     end
   end
