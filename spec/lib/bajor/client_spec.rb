@@ -4,13 +4,14 @@ require 'bajor/client'
 require 'rails_helper'
 
 def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, fixed_crop: nil)
-  run_opts = "--schema #{workflow_name}"
-  run_opts += " --fixed_crop #{fixed_crop.to_json}" if fixed_crop
-
   opts = {
-    workflow_name: workflow_name,
-    run_opts: run_opts
+    workflow_name: workflow_name
   }
+
+  run_opts = []
+  run_opts << "--schema #{workflow_name}" if manifest_path
+  run_opts << "--fixed-crop #{fixed_crop.to_json}" if fixed_crop
+  opts[:run_opts] = run_opts.join(' ') unless run_opts.empty?
 
   if manifest_url
     { manifest_url: manifest_url, opts: opts }
@@ -204,13 +205,11 @@ RSpec.describe Bajor::Client do
   describe 'create_prediction_job' do
     let(:request_url) { "#{bajor_host}/prediction/jobs/" }
     let(:manifest_url) { 'https://manifest-host.zooniverse.org/manifest.csv' }
-    let(:run_opts) { '--schema cosmic_dawn' }
     let(:request_body) do
       {
         manifest_url: manifest_url,
         opts: {
           workflow_name: workflow_name,
-          run_opts: run_opts
         }
       }
     end
@@ -254,16 +253,15 @@ RSpec.describe Bajor::Client do
 
     context 'with specific workflow_name' do
       let(:workflow_name) { 'euclid' }
-      let(:run_opts) { '--schema euclid' }
 
       let(:request_body) do
-        { manifest_url: manifest_url, opts: { workflow_name:, run_opts:} }
+        { manifest_url: manifest_url, opts: { workflow_name:} }
       end
 
       let(:request) do
         stub_request(:post, request_url)
           .with(
-            body: request_body,
+            body: { manifest_url: manifest_url, opts: { workflow_name:} },
             headers: request_headers
           )
       end
@@ -273,7 +271,7 @@ RSpec.describe Bajor::Client do
       end
 
       it 'sends the right workflow name' do
-        bajor_client.create_prediction_job(manifest_url, { workflow_name:, run_opts: })
+        bajor_client.create_prediction_job(manifest_url, { workflow_name: })
         expect(
           a_request(:post, request_url).with(body: request_body, headers: request_headers)
         ).to have_been_made.once
