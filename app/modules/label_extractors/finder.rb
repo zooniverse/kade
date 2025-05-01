@@ -7,7 +7,7 @@ module LabelExtractors
 
     # hard code Galaxy Zoo for now as these will fail due to missing constant lookup
     # long term we can add these back in and make the lookup dynamic
-    EXTRACTOR_SCHEMA_CLASS_REGEX = /\A(galaxy_zoo)_(decals|cosmic_dawn|euclid)_(.+)\z/.freeze
+    EXTRACTOR_SCHEMA_CLASS_REGEX = /\A(galaxy_zoo)_(decals|cosmic_dawn|euclid|jwst_cosmos)_(.+)\z/.freeze
 
     def self.extractor_instance(task_schema_lookup_key)
       # simulate a regex lookup failure with the || [nil, task_schema_lookup_key] as it'll raise a NameError when trying to constantize
