@@ -10,7 +10,7 @@ def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, f
 
   run_opts = []
   run_opts << "--schema #{workflow_name}" if manifest_path
-  run_opts << "--fixed-crop #{fixed_crop.to_json}" if fixed_crop
+  run_opts << "--fixed-crop '#{fixed_crop.to_json}'" if fixed_crop
   opts[:run_opts] = run_opts.join(' ') unless run_opts.empty?
 
   if manifest_url
