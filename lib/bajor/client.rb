@@ -146,7 +146,7 @@ module Bajor
         run_opts = []
         run_opts << "--schema #{o[:workflow_name].downcase}" if include_schema
         if o[:fixed_crop].present?
-          run_opts << "--fixed-crop #{o[:fixed_crop].to_json}"
+          run_opts << "--fixed-crop '#{o[:fixed_crop].to_json}'"
           o.delete(:fixed_crop)
         end
         o[:run_opts] = run_opts.join(' ') if run_opts.any?
