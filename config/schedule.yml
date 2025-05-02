@@ -7,7 +7,7 @@ zoobot_training_job:
   queue: 'high'
   args: '1' # the context_id to train on (holds the workflow, active and pool subject set ids)
   description: 'Scheduled Worker to re-train GZ Zoobot on latest data'
-  status: <%= Rails.env.production? ? 'enabled' : 'disabled' %> # only enable this in production, manually schedule via the sidekiq UI in other envs
+  status: 'disabled' # not in use
 
 zoobot_euclid_training_job:
   cron: "0 10 * * 4" # 10:00 every Thursday https://crontab.guru/#0_10_*_*_4
@@ -15,7 +15,7 @@ zoobot_euclid_training_job:
   queue: 'high'
   args: '2' # the context_id to train on (holds the workflow, active and pool subject set ids)
   description: 'Scheduled Worker to re-train GZ Zoobot on latest data for euclid workflow'
-  status: <%= Rails.env.production? ? 'enabled' : 'disabled' %> # only enable this in production, manually schedule via the sidekiq UI in other envs
+  status: 'disabled' # not in use
 
 zoobot_jwst_cosmos_training_job:
   cron: "0 10 * * 4" # 10:00 every Thursday https://crontab.guru/#0_10_*_*_4
