@@ -94,23 +94,22 @@ module Batch
               end
             end.map(&:wait)
             subject_responses.each do |subject|
-              # Create a data row for each image URL in the Subject
-              # this will duplicate the subject information for each image URL
-              subject['locations'].each_with_index do |location, frame_id|
-                manifest_data << [
-                  location.values[0], # image_url
-                  # The subject's JSON information is stored as a string,
-                  # Yes, really - this is the format that hamlet sets up.
-                  JSON.dump(
-                    {
-                      project_id: project_id,
-                      subject_set_id: subject_set_id.to_s,
-                      subject_id: subject['id'],
-                      frame_id: frame_id.to_s
-                    }
-                  )
-                ]
-              end
+              # Create a data row for the first frame in the Subject
+              location = subject['locations'].first
+              frame_id = 0
+              manifest_data << [
+                location.values[0], # image_url
+                # The subject's JSON information is stored as a string,
+                # Yes, really - this is the format that hamlet sets up.
+                JSON.dump(
+                  {
+                    project_id: project_id,
+                    subject_set_id: subject_set_id.to_s,
+                    subject_id: subject['id'],
+                    frame_id: frame_id.to_s
+                  }
+                )
+              ]
             end
           ensure
             Faraday.default_connection.close

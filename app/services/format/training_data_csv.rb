@@ -31,19 +31,18 @@ module Format
         raise MissingLocationData, "For subject id: #{reduced_subject.id}" if reduced_subject.locations.blank?
 
         # Ensure we handle multi image subjects here
-        # include 1 line per image for use in training catalogues
-        reduced_subject.locations.each do |location|
-          # each location is an object containing only 1 mimetype key and an image URL
-          image_url = location.values.first
-          csv << [
-            grouped_reduction.unique_id,
-            Zoobot::Storage.container_image_path(image_url),
-            # fetch all the reduction's saved question:answer values
-            # ensure we add 0's to the missing column headers - Zoobot demands this!
-            # https://zoobot.readthedocs.io/guides/training_from_scratch.html#creating-a-catalog
-            *grouped_reduction.labels.fetch_values(*label_column_headers) { |_key| 0 }
-          ]
-        end
+        # assume we will only train on first image
+        location = reduced_subject.locations.first
+        # each location is an object containing only 1 mimetype key and an image URL
+        image_url = location.values.first
+        csv << [
+          grouped_reduction.unique_id,
+          Zoobot::Storage.container_image_path(image_url),
+          # fetch all the reduction's saved question:answer values
+          # ensure we add 0's to the missing column headers - Zoobot demands this!
+          # https://zoobot.readthedocs.io/guides/training_from_scratch.html#creating-a-catalog
+          *grouped_reduction.labels.fetch_values(*label_column_headers) { |_key| 0 }
+        ]
       end
       temp_file.rewind
       temp_file
