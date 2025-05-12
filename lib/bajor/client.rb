@@ -138,7 +138,7 @@ module Bajor
 
     def build_opts(options, include_schema=true)
       raw = options.with_indifferent_access
-      overrides = raw.symbolize_keys.slice(:workflow_name, :fixed_crop)
+      overrides = raw.symbolize_keys.slice(:workflow_name, :fixed_crop, :n_blocks)
 
       DEFAULT_OPTIONS
       .merge(overrides)
@@ -148,6 +148,10 @@ module Bajor
         if o[:fixed_crop].present?
           run_opts << "--fixed-crop '#{o[:fixed_crop].to_json}'"
           o.delete(:fixed_crop)
+        end
+        if o[:n_blocks].present?
+          run_opts << "--n-blocks #{o[:n_blocks]}"
+          o.delete(:n_blocks)
         end
         o[:run_opts] = run_opts.join(' ') if run_opts.any?
       end

@@ -3,7 +3,7 @@
 require 'bajor/client'
 require 'rails_helper'
 
-def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, fixed_crop: nil)
+def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, fixed_crop: nil, n_blocks: nil)
   opts = {
     workflow_name: workflow_name
   }
@@ -11,6 +11,7 @@ def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, f
   run_opts = []
   run_opts << "--schema #{workflow_name}" if manifest_path
   run_opts << "--fixed-crop '#{fixed_crop.to_json}'" if fixed_crop
+  run_opts << "--n-blocks #{n_blocks}" if n_blocks
   opts[:run_opts] = run_opts.join(' ') unless run_opts.empty?
 
   if manifest_url
@@ -146,6 +147,35 @@ RSpec.describe Bajor::Client do
         bajor_client.create_training_job(
           catalogue_manifest_path,
           { workflow_name: workflow_name, fixed_crop: fixed_crop }
+        )
+        expect(
+          a_request(:post, request_url)
+            .with(body: expected_body, headers: request_headers)
+        ).to have_been_made.once
+      end
+    end
+
+    context 'with jswt_cosmos workflow and n_blocks' do
+      let(:workflow_name) { 'jswt_cosmos' }
+      let(:n_blocks) { 2 }
+
+      let(:expected_body) { build_expected_body(manifest_path: catalogue_manifest_path, workflow_name: workflow_name, n_blocks: n_blocks) }
+      let(:request) do
+        stub_request(:post, request_url)
+          .with(
+            body: expected_body.to_json,
+            headers: request_headers
+          )
+      end
+
+      before do
+        request.to_return(status: 201, body: expected_body.to_json, headers: { content_type: 'application/json' })
+      end
+
+      it 'sends jswt_cosmos workflow and n_blocks settings' do
+        bajor_client.create_training_job(
+          catalogue_manifest_path,
+          { workflow_name: workflow_name, n_blocks: n_blocks }
         )
         expect(
           a_request(:post, request_url)
@@ -307,6 +337,36 @@ RSpec.describe Bajor::Client do
         bajor_client.create_prediction_job(
           manifest_url,
           { workflow_name: workflow_name, fixed_crop: fixed_crop }
+        )
+        expect(
+          a_request(:post, request_url)
+            .with(body: expected_body.to_json, headers: request_headers)
+        ).to have_been_made.once
+      end
+    end
+
+    context 'with jswt_cosmos workflow and n_blocks' do
+      let(:workflow_name) { 'jswt_cosmos' }
+      let(:n_blocks) { 2 }
+
+      let(:expected_body) { build_expected_body(manifest_url: manifest_url, workflow_name: workflow_name, n_blocks: n_blocks) }
+
+      let(:request) do
+        stub_request(:post, request_url)
+          .with(
+            body: expected_body.to_json,
+            headers: request_headers
+          )
+      end
+
+      before do
+        request.to_return(status: 201, body: bajor_response_body.to_json, headers: { content_type: 'application/json' })
+      end
+
+      it 'sends jswt_cosmos workflow and n_blocks settings' do
+        bajor_client.create_prediction_job(
+          manifest_url,
+          { workflow_name: workflow_name, n_blocks: n_blocks }
         )
         expect(
           a_request(:post, request_url)

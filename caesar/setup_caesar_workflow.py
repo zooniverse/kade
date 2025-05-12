@@ -94,7 +94,7 @@ def create_workflow_subject_rules_and_effects():
 
         # create the subject rule effect (send to KaDE) config
         effect_config = {
-            'url': f'{KADE_ENDPOINT}/reductions/galaxy_zoo_cosmic_dawn_{subject_rule_task_key.lower()}',
+            'url': f'{KADE_ENDPOINT}/reductions/galaxy_zoo_jwst_cosmos_{subject_rule_task_key.lower()}',
             'reducer_key': f'{subject_rule_task_key}_sum',
             'password': KADE_API_BASIC_AUTH_PASSWORD,
             'username': KADE_API_BASIC_AUTH_USERNAME
@@ -114,7 +114,7 @@ def create_workflow_subject_rules_and_effects():
 if __name__ == '__main__':
     """
     Setup a an Active Learning Loop workflow for Caesar
-    For the Cosmic Dawn Survey dataset
+    For the JWST COSMOS Survey dataset
     """
     FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
     # set level to DEBUG to get the panoptes network traffic
@@ -161,7 +161,8 @@ if __name__ == '__main__':
     caesar = Caesar(endpoint=caesar_endpoint)
 
     # currently all extractors are 'question' type, if this changes we can add them here for task key lookup tuple
-    GZ_DECISION_TREE_TASK_KEYS = {'T0':True,'T1':True,'T2':True,'T3':True,'T4':True,'T5':True,'T6':True,'T7':True,'T8':True,'T11':True,'T12':True,'T13':True,'T14':True,'T15':True}
+    #GZ_DECISION_TREE_TASK_KEYS = {'T0':True,'T1':True,'T2':True,'T3':True,'T4':True,'T5':True,'T6':True,'T7':True,'T8':True,'T11':True,'T12':True,'T13':True,'T14':True,'T15':True}
+    GZ_DECISION_TREE_TASK_KEYS = {'T0':True,'T2':True,'T3':True,'T4':True,'T5':True,'T6':True,'T7':True,'T8':True,'T11':True,'T12':True,'T19':True}
     # setup known count reducer keys
     COUNT_REDUCER_KEYS = {f'{task_key}_count': task_key for task_key in GZ_DECISION_TREE_TASK_KEYS}
     # setup known sum reducer keys
@@ -172,7 +173,7 @@ if __name__ == '__main__':
     # enough information to augment the trained ML system
     # each new classification will send data to kade till retirement
     # finally - these numbers can be easily adjusted post setup in the caesar UI system, https://caesar.zooniverse.org/workflows
-    NUM_CLASSIFICATIONS_BEFORE_SEND_TO_KADE = 3 if args.caesar_env == 'production' else 1
+    NUM_CLASSIFICATIONS_BEFORE_SEND_TO_KADE = 5 if args.caesar_env == 'production' else 1 # was: 3 else 1
 
     # lookup the worklfow
     zoo_api_workflow = Workflow.find(args.workflow_id)
