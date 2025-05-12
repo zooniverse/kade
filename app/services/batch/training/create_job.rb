@@ -33,9 +33,14 @@ module Batch
           context.metadata['fixed_crop']
         end
 
+        n_blocks = if context.metadata.is_a?(Hash) && context.metadata['n_blocks']
+          context.metadata['n_blocks']
+        end
+
         {
           workflow_name: context.extractor_name,
           fixed_crop: fixed_crop,
+          n_blocks: n_blocks
         }.compact
       end
     end
