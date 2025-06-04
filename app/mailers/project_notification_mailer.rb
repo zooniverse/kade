@@ -6,6 +6,6 @@ class ProjectNotificationMailer < ApplicationMailer
       @project_name = context.module_name
       @workflow_name = context.extractor_name
       @email_to = user['email']
-      mail(to: @email_to, subject: "Your subjects are almost retired ")
+      mail(to: @email_to, subject: "Your subjects are almost retired")
     end
   end

@@ -41,6 +41,7 @@ module PredictionResults
     end
 
     def partition_results
+      @total_subjects = prediction_data.count
       prediction_data.each do |subject_id, prediction_samples|
         # data schema format is published in the file
         # and https://github.com/zooniverse/bajor/blob/main/azure/batch/scripts/predict_on_catalog.py
@@ -52,7 +53,6 @@ module PredictionResults
         @over_threshold_subject_ids << subject_id if probability >= probability_threshold
         @under_threshold_subject_ids << subject_id if probability < probability_threshold
       end
-      @total_subjects = @over_threshold_subject_ids.count + @under_threshold_subject_ids.count
       check_completion_and_notify
       # now add some 'spice' to the results by adding some random under threshold subject ids
       # but don't skew the prediction results by adding too many under threshold images
