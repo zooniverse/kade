@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_04_27_195821) do
+ActiveRecord::Schema[7.0].define(version: 2025_06_09_121625) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -52,6 +52,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_04_27_195821) do
     t.string "module_name"
     t.string "extractor_name"
     t.jsonb "metadata"
+    t.float "last_completion_rate", default: 0.0
     t.index ["workflow_id", "project_id"], name: "index_contexts_on_workflow_id_and_project_id", unique: true
   end
 
