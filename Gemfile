@@ -22,7 +22,7 @@ gem 'puma'
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'
-gem 'rails', '~> 7.0'
+gem 'rails', '~> 8.0'
 
 # gem 'redis', '~> 4.0'
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
