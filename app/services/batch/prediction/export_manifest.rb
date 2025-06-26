@@ -8,6 +8,8 @@ module Batch
     class ExportManifest
       MANIFEST_SUBJECT_SET_BATCH_SIZE = ENV.fetch('MANIFEST_SUBJECT_SET_BATCH_SIZE', '10').to_i
 
+      MAX_RETRIES = 3
+      BASE_BACKOFF_SECONDS = 0.5
       attr_accessor :subject_set_id, :panoptes_client_pool, :manifest_data, :subject_set, :project_id, :temp_file, :subject_set_subject_ids
       attr_reader :manifest_url
 
@@ -55,7 +57,10 @@ module Batch
         # filtering on the subject_set_id
         # note this approach is what the Python Client does but in serial and it's slow
         # https://github.com/zooniverse/panoptes-python-client/blob/4b49b3c789462637fa6cb4677cbe05147dbae9d5/panoptes_client/subject_set.py#L83-L84
-        first_page = panoptes_client.panoptes.get('/set_member_subjects', query)
+        first_page = with_retries do
+          panoptes_client.panoptes.get('/set_member_subjects', query)
+        end
+        return unless first_page
         first_page['set_member_subjects'].each do |set_member_subject|
           subject_set_subject_ids << set_member_subject['links']['subject']
         end
@@ -69,11 +74,15 @@ module Batch
             results = page_nums.map do |page_num|
               page_query = { subject_set_id: subject_set_id, page: page_num }
               Async do
-                panoptes_client.panoptes.get('/set_member_subjects', page_query)
+                resp = with_retries do
+                  panoptes_client.panoptes.get('/set_member_subjects', page_query)
+                end
+                next unless resp
+                resp
               end
             end.map(&:wait)
             # process the async results into the subject_set_subject_ids
-            results.each do |page|
+            results.compact.each do |page|
               page['set_member_subjects'].each do |set_member_subject|
                 subject_set_subject_ids << set_member_subject['links']['subject']
               end
@@ -90,10 +99,14 @@ module Batch
           Async do
             subject_responses = batch_of_subject_ids.map do |subject_id|
               Async do
-                panoptes_client.subject(subject_id)
+                resp = with_retries do
+                  panoptes_client.subject(subject_id)
+                end
+                next unless resp
+                resp
               end
             end.map(&:wait)
-            subject_responses.each do |subject|
+            subject_responses.compact.each do |subject|
               # Create a data row for the first frame in the Subject
               location = subject['locations'].first
               frame_id = 0
@@ -137,6 +150,34 @@ module Batch
           filename: storage_filename,
           service_name: service_name
         )
+      end
+
+
+      private
+      def with_retries(max_retries = MAX_RETRIES)
+        attempts = 0
+
+        begin
+          yield
+        rescue StandardError => e
+          attempts += 1
+          if attempts < max_retries
+            backoff = BASE_BACKOFF_SECONDS * attempts
+            Rails.logger.warn(
+              "[ExportManifest] Attempt #{attempts}/#{max_retries} raised #{e.class.name}: #{e.message}. " \
+              "Retrying in #{backoff}s..."
+            )
+            sleep(backoff)
+            retry
+          else
+            Rails.logger.warn(
+              "[ExportManifest] All #{max_retries} attempts failed: #{e.class.name} – #{e.message}. Skipping."
+            )
+            return nil
+          end
+        ensure
+          Faraday.default_connection.close
+        end
       end
     end
   end

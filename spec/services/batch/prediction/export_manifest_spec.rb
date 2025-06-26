@@ -48,4 +48,39 @@ RSpec.describe Batch::Prediction::ExportManifest do
       expect(service.manifest_url).to eq("#{Bajor::Client::BLOB_STORE_HOST_CONTAINER_URL}/predictions#{blob_double.key}")
     end
   end
+
+  describe '#with_retries' do
+    let(:subject_set_id) { 1 }
+    let(:pool) { ConnectionPool.new(size: 1, timeout: 1) { Panoptes::Api.client } }
+    let(:service) { described_class.new(subject_set_id, pool) }
+
+    before do
+      allow(described_class).to receive(:sleep)
+    end
+
+    it 'retries a failing block up to max_retries then returns nil' do
+      call_count = 0
+
+      result = service.send(:with_retries, 2) do
+        call_count += 1
+        raise StandardError
+      end
+
+      expect(call_count).to eq(2)
+      expect(result).to be_nil
+    end
+
+    it 'succeeds on the second attempt if first raises an exception' do
+      call_count = 0
+
+      result = service.send(:with_retries, 3) do
+        call_count += 1
+        raise StandardError, 'failed call' if call_count == 1
+        call_count
+      end
+
+      expect(call_count).to eq(2)
+      expect(result).to eq(call_count)
+    end
+  end
 end
