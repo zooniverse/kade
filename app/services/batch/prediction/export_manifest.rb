@@ -57,7 +57,7 @@ module Batch
         # filtering on the subject_set_id
         # note this approach is what the Python Client does but in serial and it's slow
         # https://github.com/zooniverse/panoptes-python-client/blob/4b49b3c789462637fa6cb4677cbe05147dbae9d5/panoptes_client/subject_set.py#L83-L84
-        first_page = with_api_retry do
+        first_page = with_retries do
           panoptes_client.panoptes.get('/set_member_subjects', query)
         end
         return unless first_page
@@ -74,7 +74,7 @@ module Batch
             results = page_nums.map do |page_num|
               page_query = { subject_set_id: subject_set_id, page: page_num }
               Async do
-                resp = with_api_retry do
+                resp = with_retries do
                   panoptes_client.panoptes.get('/set_member_subjects', page_query)
                 end
                 next unless resp
@@ -99,7 +99,7 @@ module Batch
           Async do
             subject_responses = batch_of_subject_ids.map do |subject_id|
               Async do
-                resp = with_api_retry do
+                resp = with_retries do
                   panoptes_client.subject(subject_id)
                 end
                 next unless resp
@@ -154,7 +154,7 @@ module Batch
 
 
       private
-      def with_api_retry(max_retries = MAX_RETRIES)
+      def with_retries(max_retries = MAX_RETRIES)
         attempts = 0
 
         begin

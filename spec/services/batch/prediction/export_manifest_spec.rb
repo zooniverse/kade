@@ -49,7 +49,7 @@ RSpec.describe Batch::Prediction::ExportManifest do
     end
   end
 
-  describe '#with_api_retry' do
+  describe '#with_retries' do
     let(:subject_set_id) { 1 }
     let(:pool) { ConnectionPool.new(size: 1, timeout: 1) { Panoptes::Api.client } }
     let(:service) { described_class.new(subject_set_id, pool) }
@@ -61,7 +61,7 @@ RSpec.describe Batch::Prediction::ExportManifest do
     it 'retries a failing block up to max_retries then returns nil' do
       call_count = 0
 
-      result = service.send(:with_api_retry, 2) do
+      result = service.send(:with_retries, 2) do
         call_count += 1
         raise StandardError
       end
@@ -73,7 +73,7 @@ RSpec.describe Batch::Prediction::ExportManifest do
     it 'succeeds on the second attempt if first raises an exception' do
       call_count = 0
 
-      result = service.send(:with_api_retry, 3) do
+      result = service.send(:with_retries, 3) do
         call_count += 1
         raise StandardError, 'failed call' if call_count == 1
         call_count
