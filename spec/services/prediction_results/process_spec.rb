@@ -93,6 +93,18 @@ RSpec.describe PredictionResults::Process do
       expect(process_results_service.under_threshold_subject_ids).to be_empty
       expect(process_results_service.random_spice_subject_ids).to match_array([under_threshold_subject_id])
     end
+
+    context 'when completion hits the notification threshold' do
+      before do
+        stub_const("PredictionResults::Process::COMPLETION_NOTIFICATION_THRESHOLD", 0.5)
+        allow(NotifyProjectOwnerJob).to receive(:perform_async)
+      end
+
+      it 'calls NotifyProjectOwnerJob for almost retired subjects' do
+        process_results_service.partition_results
+        expect(NotifyProjectOwnerJob).to have_received(:perform_async).with(active_subject_set_id, 0.5)
+      end
+    end
   end
 
   describe '#move_over_threshold_subjects_to_active_set' do
