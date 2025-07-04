@@ -5,6 +5,7 @@ require 'remote_file/reader'
 module PredictionResults
   class Process
     SUBJECT_ACTION_API_BATCH_SIZE = ENV.fetch('SUBJECT_ACTION_API_BATCH_SIZE', '10').to_i
+    COMPLETION_NOTIFICATION_THRESHOLD = ENV.fetch('COMPLETION_NOTIFICATION_THRESHOLD', '0.95').to_f
 
     attr_accessor :results_url, :subject_set_id, :probability_threshold,
                   :over_threshold_subject_ids, :under_threshold_subject_ids,
@@ -19,6 +20,7 @@ module PredictionResults
       @under_threshold_subject_ids = []
       @random_spice_subject_ids = []
       @prediction_data = nil
+      @total_subjects = 0
     end
 
     def run
@@ -39,6 +41,7 @@ module PredictionResults
     end
 
     def partition_results
+      @total_subjects = prediction_data.count
       prediction_data.each do |subject_id, prediction_samples|
         # data schema format is published in the file
         # and https://github.com/zooniverse/bajor/blob/main/azure/batch/scripts/predict_on_catalog.py
@@ -50,6 +53,7 @@ module PredictionResults
         @over_threshold_subject_ids << subject_id if probability >= probability_threshold
         @under_threshold_subject_ids << subject_id if probability < probability_threshold
       end
+      check_completion_and_notify
       # now add some 'spice' to the results by adding some random under threshold subject ids
       # but don't skew the prediction results by adding too many under threshold images
       # ensure we only use apply the randomisation factor to the count of over threshold subject ids
@@ -83,6 +87,15 @@ module PredictionResults
       subject_ids
         .each_slice(SUBJECT_ACTION_API_BATCH_SIZE)
         .map { |batch_subject_ids| [batch_subject_ids, subject_set_id] }
+    end
+
+    private
+    def check_completion_and_notify
+      total_under_threshold_subjects = @under_threshold_subject_ids.count
+      completion_rate = (total_under_threshold_subjects.to_f / @total_subjects.to_f)
+      if completion_rate >= COMPLETION_NOTIFICATION_THRESHOLD
+        NotifyProjectOwnerJob.perform_async(subject_set_id, completion_rate)
+      end
     end
   end
 end
