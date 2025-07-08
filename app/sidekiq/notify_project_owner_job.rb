@@ -5,18 +5,31 @@ class NotifyProjectOwnerJob
   include Sidekiq::Job
   sidekiq_options retry: 5
 
-  def perform(subject_set_id, completion_rate)
+  def perform(subject_set_id, completion_rate, action='subject_completion')
     @context = Context.find_by!(active_subject_set_id: subject_set_id)
-
-    owner_link = fetch_project_owner
-    owner_user = fetch_owner_user(owner_link['id'])
-
-    ProjectNotificationMailer
-      .notify_subject_completion(owner_user, @context, (completion_rate * 100))
-      .deliver_now
+    @completion_rate = completion_rate
+    handle_notify(action)
   end
 
   private
+  def handle_notify(action)
+    owner_link = fetch_project_owner
+    owner_user = fetch_owner_user(owner_link['id'])
+
+    case action
+    when 'subject_completion'
+        ProjectNotificationMailer
+            .notify_subject_completion(owner_user, @context, (@completion_rate * 100))
+            .deliver_now
+    when 'model_result_change'
+        ProjectNotificationMailer
+            .notify_prediction_change(owner_user, @context, (@completion_rate * 100))
+            .deliver_now
+    else
+      raise StandardError.new('No NotifyProjectOwnerJob action specified')
+    end
+  end
+
   def fetch_project_owner(max_retries = 3)
     with_api_retry(max_retries) do
       resp = Panoptes::Api.client.project(@context.project_id)

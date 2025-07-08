@@ -6,6 +6,7 @@ module PredictionResults
   class Process
     SUBJECT_ACTION_API_BATCH_SIZE = ENV.fetch('SUBJECT_ACTION_API_BATCH_SIZE', '10').to_i
     COMPLETION_NOTIFICATION_THRESHOLD = ENV.fetch('COMPLETION_NOTIFICATION_THRESHOLD', '0.95').to_f
+    PREDICTION_CHANGE_THRESHOLD = ENV.fetch('COMPLETION_NOTIFICATION_THRESHOLD', '0.4').to_f
 
     attr_accessor :results_url, :subject_set_id, :probability_threshold,
                   :over_threshold_subject_ids, :under_threshold_subject_ids,
@@ -54,6 +55,7 @@ module PredictionResults
         @under_threshold_subject_ids << subject_id if probability < probability_threshold
       end
       check_completion_and_notify
+      check_prediction_change_and_notify
       # now add some 'spice' to the results by adding some random under threshold subject ids
       # but don't skew the prediction results by adding too many under threshold images
       # ensure we only use apply the randomisation factor to the count of over threshold subject ids
@@ -90,9 +92,29 @@ module PredictionResults
     end
 
     private
+    def completion_rate
+      total_under_threshold_subjects = @under_threshold_subject_ids.count
+      @completion_rate ||= (total_under_threshold_subjects.to_f / @total_subjects.to_f)
+    end
+
+    def check_completion_and_notify
+      if completion_rate >= COMPLETION_NOTIFICATION_THRESHOLD
+        NotifyProjectOwnerJob.perform_async(subject_set_id, @completion_rate)
+      end
+    end
+
+    def check_prediction_change_and_notify
+      context = Context.find_by(active_subject_set_id: subject_set_id)
+      return unless context
+      difference = (completion_rate - context.last_completion_rate.to_f).abs
+      if (difference > PREDICTION_CHANGE_THRESHOLD) && context.last_completion_rate != 0
+        NotifyProjectOwnerJob.perform_async(subject_set_id, difference, 'model_result_change')
+      end
+
+      context.update(last_completion_rate: @completion_rate)
+    end
     def check_completion_and_notify
       total_under_threshold_subjects = @under_threshold_subject_ids.count
-      completion_rate = (total_under_threshold_subjects.to_f / @total_subjects.to_f)
       if completion_rate >= COMPLETION_NOTIFICATION_THRESHOLD
         NotifyProjectOwnerJob.perform_async(subject_set_id, completion_rate)
       end

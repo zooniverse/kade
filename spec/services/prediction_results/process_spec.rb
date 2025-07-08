@@ -4,13 +4,16 @@ require 'rails_helper'
 require 'remote_file/reader'
 
 RSpec.describe PredictionResults::Process do
+  fixtures :contexts
+
   let(:confidence_threshold) { 0.8 }
   let(:remote_file) do
     # build a fake file we double as a result of the downloader
     Tempfile.new('remote-file-test')
   end
   let(:results_url) { 'https://fake.com/results.json' }
-  let(:active_subject_set_id) { 1 }
+  let(:context){ contexts(:galaxy_zoo_cosmic_active_learning_project) }
+  let(:active_subject_set_id) { context.active_subject_set_id }
   let(:process_results_service) { described_class.new(results_url: results_url, subject_set_id: active_subject_set_id) }
   let(:over_threshold_subject_id) { 1 }
   let(:under_threshold_subject_id) { 2 }
@@ -94,15 +97,34 @@ RSpec.describe PredictionResults::Process do
       expect(process_results_service.random_spice_subject_ids).to match_array([under_threshold_subject_id])
     end
 
-    context 'when completion hits the notification threshold' do
+    context 'Notification triggers' do
       before do
-        stub_const("PredictionResults::Process::COMPLETION_NOTIFICATION_THRESHOLD", 0.5)
         allow(NotifyProjectOwnerJob).to receive(:perform_async)
       end
 
-      it 'calls NotifyProjectOwnerJob for almost retired subjects' do
-        process_results_service.partition_results
-        expect(NotifyProjectOwnerJob).to have_received(:perform_async).with(active_subject_set_id, 0.5)
+      context 'when completion hits the notification threshold' do
+        before do
+          stub_const("PredictionResults::Process::COMPLETION_NOTIFICATION_THRESHOLD", 0.5)
+        end
+
+        it 'calls NotifyProjectOwnerJob for almost retired subjects' do
+          process_results_service.partition_results
+          expect(NotifyProjectOwnerJob).to have_received(:perform_async).with(active_subject_set_id, 0.5)
+        end
+      end
+
+      context 'when model changes significantly' do
+        before do
+          stub_const("PredictionResults::Process::PREDICTION_CHANGE_THRESHOLD", 0.1)
+        end
+
+        it 'calls NotifyProjectOwnerJob for model changes' do
+          process_results_service.partition_results
+
+          completion_rate = (process_results_service.under_threshold_subject_ids.count.to_f / process_results_service.prediction_data.size.to_f).to_f
+          difference = (completion_rate - context.last_completion_rate.to_f).abs
+          expect(NotifyProjectOwnerJob).to have_received(:perform_async).with(active_subject_set_id, difference, 'model_result_change')
+        end
       end
     end
   end
