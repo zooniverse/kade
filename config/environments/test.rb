@@ -46,6 +46,10 @@ Rails.application.configure do
   # Store uploaded files on local disk
   config.active_storage.service = :test
 
+  config.action_mailer.delivery_method = :test
+  config.action_mailer.default_url_options = { protocol: 'https',
+                                               host: 'kade_test.zooniverse.org' }
+
   if ENV['DISABLE_TEST_LOGGING']
     # rubocop:disable Rails/Output
     puts 'Logs are being suppressed to speed up the test suite. ' \

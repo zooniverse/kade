@@ -61,6 +61,19 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    enable_starttls_auto: ENV['MAILER_ENABLE_STARTTLS_AUTO'] || true,
+    address: ENV['MAILER_ADDRESS'],
+    port: ENV.fetch('MAILER_PORT', 587).to_i,
+    domain: ENV['MAILER_DOMAIN'] || 'zooniverse.org',
+    authentication: ENV['MAILER_AUTHENTICATION'] || 'plain',
+    user_name: ENV['MAILER_USER_NAME'],
+    password: ENV['MAILER_PASSWORD']
+  }
+
+  config.action_mailer.default_url_options = { protocol: 'https',
+                                               host: 'kade.zooniverse.org' }
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
   config.i18n.fallbacks = true

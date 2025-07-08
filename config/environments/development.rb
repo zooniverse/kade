@@ -53,4 +53,7 @@ Rails.application.configure do
 
   # Store uploaded files on the local disk
   config.active_storage.service = :development
+
+  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.default_url_options = { host: 'localhost:3000' }
 end
