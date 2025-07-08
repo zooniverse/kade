@@ -104,13 +104,20 @@ module PredictionResults
     end
 
     def check_prediction_change_and_notify
-      context = Context.find_by!(active_subject_set_id: subject_set_id)
-      difference = (@completion_rate - context.last_completion_rate.to_f).abs
+      context = Context.find_by(active_subject_set_id: subject_set_id)
+      return unless context
+      difference = (completion_rate - context.last_completion_rate.to_f).abs
       if (difference > PREDICTION_CHANGE_THRESHOLD) && context.last_completion_rate != 0
         NotifyProjectOwnerJob.perform_async(subject_set_id, difference, 'model_result_change')
       end
 
       context.update(last_completion_rate: @completion_rate)
+    end
+    def check_completion_and_notify
+      total_under_threshold_subjects = @under_threshold_subject_ids.count
+      if completion_rate >= COMPLETION_NOTIFICATION_THRESHOLD
+        NotifyProjectOwnerJob.perform_async(subject_set_id, completion_rate)
+      end
     end
   end
 end
