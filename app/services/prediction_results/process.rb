@@ -113,11 +113,5 @@ module PredictionResults
 
       context.update(last_completion_rate: @completion_rate)
     end
-    def check_completion_and_notify
-      total_under_threshold_subjects = @under_threshold_subject_ids.count
-      if completion_rate >= COMPLETION_NOTIFICATION_THRESHOLD
-        NotifyProjectOwnerJob.perform_async(subject_set_id, completion_rate)
-      end
-    end
   end
 end
