@@ -3,10 +3,16 @@
 require 'bajor/client'
 require 'rails_helper'
 
-def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, fixed_crop: nil, n_blocks: nil)
+def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, fixed_crop: nil, n_blocks: nil, container_image_name: nil, training_script_path: nil, prediction_script_path: nil, promote_script_path: nil, pretrained_checkpoint_url: nil)
   opts = {
     workflow_name: workflow_name
   }
+
+  opts[:container_image_name] = container_image_name if container_image_name
+  opts[:training_script_path] = training_script_path if training_script_path
+  opts[:prediction_script_path] = prediction_script_path if prediction_script_path
+  opts[:promote_script_path] = promote_script_path if promote_script_path
+  opts[:pretrained_checkpoint_url] = pretrained_checkpoint_url if pretrained_checkpoint_url
 
   run_opts = []
   run_opts << "--schema #{workflow_name}" if manifest_path
@@ -155,6 +161,65 @@ RSpec.describe Bajor::Client do
       end
     end
 
+    context 'with metadata-driven batch config' do
+      let(:workflow_name) { 'jwst_cosmos' }
+      let(:fixed_crop) do
+        {
+          lower_left_x: 30,
+          lower_left_y: 30,
+          upper_right_x: 750,
+          upper_right_y: 750
+        }
+      end
+      let(:n_blocks) { 2 }
+      let(:container_image_name) { 'zoobot.azurecr.io/pytorch:custom-jwst' }
+      let(:training_script_path) { 'jwst/train_model_finetune_on_catalog.py' }
+      let(:promote_script_path) { 'jwst/promote_best_checkpoint_to_model.sh' }
+      let(:pretrained_checkpoint_url) { 'https://kadeactivelearning.blob.core.windows.net/models/jwst/jwst-pretrained.ckpt' }
+      let(:expected_body) do
+        build_expected_body(
+          manifest_path: catalogue_manifest_path,
+          workflow_name: workflow_name,
+          fixed_crop: fixed_crop,
+          n_blocks: n_blocks,
+          container_image_name: container_image_name,
+          training_script_path: training_script_path,
+          promote_script_path: promote_script_path,
+          pretrained_checkpoint_url: pretrained_checkpoint_url
+        )
+      end
+      let(:request) do
+        stub_request(:post, request_url)
+          .with(
+            body: expected_body.to_json,
+            headers: request_headers
+          )
+      end
+
+      before do
+        request.to_return(status: 201, body: bajor_response_body.to_json, headers: { content_type: 'application/json' })
+      end
+
+      it 'serializes metadata-driven training config into the request body' do
+        bajor_client.create_training_job(
+          catalogue_manifest_path,
+          {
+            workflow_name: workflow_name,
+            fixed_crop: fixed_crop,
+            n_blocks: n_blocks,
+            container_image_name: container_image_name,
+            training_script_path: training_script_path,
+            promote_script_path: promote_script_path,
+            pretrained_checkpoint_url: pretrained_checkpoint_url
+          }
+        )
+
+        expect(
+          a_request(:post, request_url).with(body: expected_body, headers: request_headers)
+        ).to have_been_made.once
+      end
+    end
+
     context 'with jswt_cosmos workflow and n_blocks' do
       let(:workflow_name) { 'jswt_cosmos' }
       let(:n_blocks) { 2 }
@@ -285,13 +350,13 @@ RSpec.describe Bajor::Client do
       let(:workflow_name) { 'euclid' }
 
       let(:request_body) do
-        { manifest_url: manifest_url, opts: { workflow_name:} }
+        { manifest_url: manifest_url, opts: { workflow_name: workflow_name } }
       end
 
       let(:request) do
         stub_request(:post, request_url)
           .with(
-            body: { manifest_url: manifest_url, opts: { workflow_name:} },
+            body: { manifest_url: manifest_url, opts: { workflow_name: workflow_name } },
             headers: request_headers
           )
       end
@@ -301,7 +366,7 @@ RSpec.describe Bajor::Client do
       end
 
       it 'sends the right workflow name' do
-        bajor_client.create_prediction_job(manifest_url, { workflow_name: })
+        bajor_client.create_prediction_job(manifest_url, { workflow_name: workflow_name })
         expect(
           a_request(:post, request_url).with(body: request_body, headers: request_headers)
         ).to have_been_made.once
@@ -341,6 +406,59 @@ RSpec.describe Bajor::Client do
         expect(
           a_request(:post, request_url)
             .with(body: expected_body.to_json, headers: request_headers)
+        ).to have_been_made.once
+      end
+    end
+
+    context 'with metadata-driven prediction config' do
+      let(:workflow_name) { 'jwst_cosmos' }
+      let(:fixed_crop) do
+        {
+          lower_left_x: 30,
+          lower_left_y: 30,
+          upper_right_x: 750,
+          upper_right_y: 750
+        }
+      end
+      let(:container_image_name) { 'zoobot.azurecr.io/pytorch:custom-jwst' }
+      let(:prediction_script_path) { 'jwst/predict_catalog_with_model.py' }
+      let(:pretrained_checkpoint_url) { 'https://kadeactivelearning.blob.core.windows.net/models/jwst/jwst-pretrained.ckpt' }
+      let(:request_body) do
+        build_expected_body(
+          manifest_url: manifest_url,
+          workflow_name: workflow_name,
+          fixed_crop: fixed_crop,
+          container_image_name: container_image_name,
+          prediction_script_path: prediction_script_path,
+          pretrained_checkpoint_url: pretrained_checkpoint_url
+        )
+      end
+      let(:request) do
+        stub_request(:post, request_url)
+          .with(
+            body: request_body,
+            headers: request_headers
+          )
+      end
+
+      before do
+        request.to_return(status: 201, body: bajor_response_body.to_json, headers: { content_type: 'application/json' })
+      end
+
+      it 'serializes metadata-driven prediction config into the request body' do
+        bajor_client.create_prediction_job(
+          manifest_url,
+          {
+            workflow_name: workflow_name,
+            fixed_crop: fixed_crop,
+            container_image_name: container_image_name,
+            prediction_script_path: prediction_script_path,
+            pretrained_checkpoint_url: pretrained_checkpoint_url
+          }
+        )
+
+        expect(
+          a_request(:post, request_url).with(body: request_body, headers: request_headers)
         ).to have_been_made.once
       end
     end

@@ -29,19 +29,7 @@ module Batch
         context = Context.find_by(workflow_id: training_job.workflow_id)
         return {} unless context
 
-        fixed_crop = if context.metadata.is_a?(Hash) && context.metadata['fixed_crop'].is_a?(Hash)
-          context.metadata['fixed_crop']
-        end
-
-        n_blocks = if context.metadata.is_a?(Hash) && context.metadata['n_blocks']
-          context.metadata['n_blocks']
-        end
-
-        {
-          workflow_name: context.extractor_name,
-          fixed_crop: fixed_crop,
-          n_blocks: n_blocks
-        }.compact
+        Batch::ContextRuntimeOptions.for_training(context)
       end
     end
   end
