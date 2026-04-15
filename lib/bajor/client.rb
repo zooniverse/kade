@@ -10,6 +10,16 @@ module Bajor
 
     JSON_HEADERS = { 'Content-Type' => 'application/json', 'Accept' => 'application/json' }.freeze
     DEFAULT_OPTIONS = { workflow_name: 'cosmic_dawn' }.freeze
+    BATCH_OPTION_KEYS = %i[
+      workflow_name
+      fixed_crop
+      n_blocks
+      container_image_name
+      training_script_path
+      prediction_script_path
+      promote_script_path
+      pretrained_checkpoint_url
+    ].freeze
 
     include HTTParty
 
@@ -138,7 +148,7 @@ module Bajor
 
     def build_opts(options, include_schema=true)
       raw = options.with_indifferent_access
-      overrides = raw.symbolize_keys.slice(:workflow_name, :fixed_crop, :n_blocks)
+      overrides = raw.symbolize_keys.slice(*BATCH_OPTION_KEYS)
 
       DEFAULT_OPTIONS
       .merge(overrides)

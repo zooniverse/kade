@@ -21,10 +21,7 @@ RSpec.describe Batch::Prediction::CreateJob do
     let(:prediction_create_job) { described_class.new(prediction_job, bajor_client_double) }
     let(:job_service_url) { 'https://bajor-host/prediction/job/123' }
     let(:prediction_options){
-      {
-        workflow_name: context.extractor_name,
-        fixed_crop: context.metadata['fixed_crop'],
-      }.compact
+      Batch::ContextRuntimeOptions.for_prediction(context)
     }
 
     context 'when bajor submission succeeds' do
@@ -60,6 +57,28 @@ RSpec.describe Batch::Prediction::CreateJob do
         it 'calls the bajor client service with workflow name from active_subject_set_id' do
           described_class.new(prediction_job, bajor_client_double).run
           expect(bajor_client_double).to have_received(:create_prediction_job).with(manifest_url, prediction_options).once
+        end
+      end
+
+      describe 'prediction_job with nested batch metadata' do
+        let(:context){ contexts(:galaxy_zoo_cosmos_active_learning_project) }
+        let(:prediction_job) do
+          PredictionJob.new(
+            manifest_url: manifest_url,
+            state: :pending,
+            subject_set_id: context.active_subject_set_id,
+            probability_threshold: 0.5,
+            randomisation_factor: 0.5
+          )
+        end
+
+        it 'passes metadata-driven prediction config through to bajor' do
+          prediction_create_job.run
+
+          expect(bajor_client_double).to have_received(:create_prediction_job).with(
+            manifest_url,
+            Batch::ContextRuntimeOptions.for_prediction(context)
+          ).once
         end
       end
 

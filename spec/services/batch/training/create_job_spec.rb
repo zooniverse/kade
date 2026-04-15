@@ -5,6 +5,8 @@ require 'bajor/client'
 
 RSpec.describe Batch::Training::CreateJob do
   describe '#run' do
+    fixtures :contexts
+
     let(:manifest_path) { '/a/shared/blob/storage/path.csv' }
     let(:manifest_url) { "https://a.shared.blob.storage#{manifest_path}"}
     let(:training_job) { TrainingJob.new(manifest_url: manifest_url, workflow_id: '123', state: :pending) }
@@ -22,10 +24,7 @@ RSpec.describe Batch::Training::CreateJob do
 
     it 'calls the bajor client service with the correct manifest_path' do
       parent_context = Context.find_by(workflow_id: training_job.workflow_id)
-      training_opts = {
-        workflow_name: parent_context.extractor_name,
-        fixed_crop: parent_context.metadata['fixed_crop'],
-      }.compact
+      training_opts = Batch::ContextRuntimeOptions.for_training(parent_context)
 
       training_create_job.run
       expect(bajor_client_double).to have_received(:create_training_job).with(manifest_path, training_opts).once
@@ -50,6 +49,26 @@ RSpec.describe Batch::Training::CreateJob do
           training_create_job.run
         }.to change(training_job, :state).from('pending').to('failed')
          .and change(training_job, :message).from('').to(error_message)
+      end
+    end
+
+    context 'with metadata-driven batch config' do
+      let(:metadata_context) { contexts(:galaxy_zoo_cosmos_active_learning_project) }
+      let(:training_job) do
+        TrainingJob.new(
+          manifest_url: manifest_url,
+          workflow_id: metadata_context.workflow_id,
+          state: :pending
+        )
+      end
+
+      it 'passes nested batch metadata through to bajor' do
+        training_create_job.run
+
+        expect(bajor_client_double).to have_received(:create_training_job).with(
+          manifest_path,
+          Batch::ContextRuntimeOptions.for_training(metadata_context)
+        ).once
       end
     end
   end

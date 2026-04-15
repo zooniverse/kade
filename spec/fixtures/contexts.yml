@@ -20,10 +20,10 @@ galaxy_zoo_euclid_active_learning_project:
 
 galaxy_zoo_cosmos_active_learning_project:
   id: 3
-  workflow_id: 133
+  workflow_id: 134
   project_id: 41
-  active_subject_set_id: 56
-  pool_subject_set_id: 67
+  active_subject_set_id: 57
+  pool_subject_set_id: 68
   module_name: 'galaxy_zoo'
   extractor_name: 'jwst_cosmos'
   metadata: {
@@ -32,5 +32,13 @@ galaxy_zoo_cosmos_active_learning_project:
       'lower_left_y': 30,
       'upper_right_x': 750,
       'upper_right_y': 750
+    },
+    'batch': {
+      'container_image_name': 'zoobot.azurecr.io/pytorch:custom-jwst',
+      'training_script_path': 'jwst/train_model_finetune_on_catalog.py',
+      'prediction_script_path': 'jwst/predict_catalog_with_model.py',
+      'promote_script_path': 'jwst/promote_best_checkpoint_to_model.sh',
+      'pretrained_checkpoint_url': 'https://kadeactivelearning.blob.core.windows.net/models/jwst/jwst-pretrained.ckpt',
+      'n_blocks': 2
     }
   }
