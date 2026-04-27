@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::API
-  rescue_from LabelExtractors::GalaxyZoo::UnknownTaskKey, LabelExtractors::Finder::UnknownExtractor do |e|
+  rescue_from LabelExtractors::ConfigurationError,
+              LabelExtractors::UnknownTaskKey,
+              LabelExtractors::UnknownLabelKey,
+              LabelExtractors::GalaxyZoo::UnknownTaskKey,
+              LabelExtractors::GalaxyZoo::UnknownLabelKey,
+              LabelExtractors::Finder::UnknownExtractor do |e|
     # keep notifying HB about these errors - longer term remove if noisy
     Honeybadger.notify(e)
     # and respond to the client with a useful error message so they can fix it

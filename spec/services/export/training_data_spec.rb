@@ -59,5 +59,38 @@ RSpec.describe Export::TrainingData do
         expect(training_data_model.failed?).to be(true)
       end
     end
+
+    context 'with a DB-backed label extractor definition' do
+      let(:workflow_id) { 556 }
+
+      before do
+        Context.create!(
+          workflow_id: workflow_id,
+          project_id: 43,
+          active_subject_set_id: 601,
+          pool_subject_set_id: 602,
+          module_name: 'new_project',
+          extractor_name: 'main'
+        )
+        LabelExtractorDefinition.create!(
+          module_name: 'new_project',
+          extractor_name: 'main',
+          config: {
+            data_release_suffix: 'np',
+            task_key_label_prefixes: { T0: 'smooth-or-featured' },
+            task_key_data_labels: { T0: { '0': 'smooth' } }
+          }
+        )
+      end
+
+      it 'uses registry-backed label headers' do
+        export_service_instance.run
+
+        expect(Format::TrainingDataCsv).to have_received(:new).with(
+          workflow_id,
+          %w[id_str file_loc smooth-or-featured-np_smooth]
+        )
+      end
+    end
   end
 end

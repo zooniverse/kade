@@ -2,9 +2,7 @@
 
 module Zoobot
   def self.label_column_headers(module_name='GalaxyZoo', extractor_name='CosmicDawn')
-    schema_klass = "LabelExtractors::#{module_name}::#{extractor_name}".constantize
-    # as data sets change, switch to different mission label extractors, e.g. Decals is older
-    %w[id_str file_loc] | schema_klass.question_answers_schema
+    LabelExtractors::Registry.label_column_headers(module_name.underscore, extractor_name.underscore)
   end
 
   module Storage

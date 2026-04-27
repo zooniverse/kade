@@ -10,12 +10,9 @@ module Export
 
     def run
       context = Context.find_by(workflow_id: training_data_export.workflow_id)
-      module_name = context.module_name.camelize
-      extractor_name = context.extractor_name.camelize
-      # create the formatted csv file export IO object
       csv_export_file = Format::TrainingDataCsv.new(
         training_data_export.workflow_id,
-        Zoobot.label_column_headers(module_name, extractor_name)
+        LabelExtractors::Registry.label_column_headers(context.module_name, context.extractor_name)
       ).run
 
       # upload the export file via active storage
