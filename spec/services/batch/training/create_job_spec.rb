@@ -44,6 +44,12 @@ RSpec.describe Batch::Training::CreateJob do
         allow(bajor_client_double).to receive(:create_training_job).and_raise(Bajor::Client::Error, error_message)
       end
 
+      it 'does not notify Honeybadger about the failure' do
+        allow(Honeybadger).to receive(:notify)
+        training_create_job.run
+        expect(Honeybadger).not_to have_received(:notify)
+      end
+
       it 'stores the error message on the training job resource' do
         expect {
           training_create_job.run

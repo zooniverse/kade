@@ -17,6 +17,7 @@ RSpec.describe RetrainZoobotJob, type: :job do
       allow(Export::TrainingData).to receive(:new).and_return(export_training_data_double)
       allow(batch_training_create_job_double).to receive(:run).and_return(training_job)
       allow(TrainingJob).to receive(:create!).and_call_original
+      allow(Honeybadger).to receive(:notify)
       allow(Batch::Training::CreateJob).to receive(:new).with(instance_of(TrainingJob)).and_return(batch_training_create_job_double)
     end
 
@@ -54,6 +55,25 @@ RSpec.describe RetrainZoobotJob, type: :job do
         allow(TrainingJobMonitorJob).to receive(:perform_in)
         expect { job.perform(context.id) }.to raise_error(RetrainZoobotJob::Failure)
         expect(TrainingJobMonitorJob).not_to have_received(:perform_in)
+      end
+
+      it 'notifies Honeybadger about the failed training job' do
+        expect { job.perform(context.id) }.to raise_error(RetrainZoobotJob::Failure)
+        expect(Honeybadger).to have_received(:notify).with(instance_of(RetrainZoobotJob::Failure))
+      end
+    end
+
+    context 'when training data export fails' do
+      let(:export_error) { Format::TrainingDataCsv::MissingLocationData.new('For subject id: 1') }
+
+      before do
+        allow(export_training_data_double).to receive(:run).and_raise(export_error)
+      end
+
+      it 'notifies Honeybadger before reraising' do
+        expect { job.perform(context.id) }.to raise_error(Format::TrainingDataCsv::MissingLocationData)
+
+        expect(Honeybadger).to have_received(:notify).with(export_error)
       end
     end
 
