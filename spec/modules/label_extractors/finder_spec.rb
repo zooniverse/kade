@@ -32,5 +32,22 @@ RSpec.describe LabelExtractors::Finder do
       label_extractor = described_class.extractor_instance('galaxy_zoo_decals_t0')
       expect(label_extractor.task_lookup_key).to eq('T0')
     end
+
+    it 'finds DB-backed extractor definitions' do
+      LabelExtractorDefinition.create!(
+        module_name: 'new_project',
+        extractor_name: 'main',
+        config: {
+          data_release_suffix: 'np',
+          task_key_label_prefixes: { T0: 'smooth-or-featured' },
+          task_key_data_labels: { T0: { '0': 'smooth' } }
+        }
+      )
+
+      label_extractor = described_class.extractor_instance('new_project_main_t0')
+
+      expect(label_extractor).to be_a(LabelExtractors::ConfigurableExtractor)
+      expect(label_extractor.task_lookup_key).to eq('T0')
+    end
   end
 end

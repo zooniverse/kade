@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_04_27_195821) do
+ActiveRecord::Schema[7.0].define(version: 2026_04_22_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -53,6 +53,16 @@ ActiveRecord::Schema[7.0].define(version: 2025_04_27_195821) do
     t.string "extractor_name"
     t.jsonb "metadata"
     t.index ["workflow_id", "project_id"], name: "index_contexts_on_workflow_id_and_project_id", unique: true
+  end
+
+  create_table "label_extractor_definitions", force: :cascade do |t|
+    t.string "module_name", null: false
+    t.string "extractor_name", null: false
+    t.boolean "enabled", default: true, null: false
+    t.jsonb "config", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["module_name", "extractor_name"], name: "index_label_extractor_definitions_on_module_and_extractor", unique: true
   end
 
   create_table "prediction_jobs", force: :cascade do |t|

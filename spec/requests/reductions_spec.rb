@@ -160,6 +160,49 @@ RSpec.describe 'Reductions', type: :request do
       end
     end
 
+    context 'with a DB-backed label extractor definition' do
+      let(:context) do
+        Context.create!(
+          workflow_id: 555,
+          project_id: 42,
+          active_subject_set_id: 501,
+          pool_subject_set_id: 502,
+          module_name: 'new_project',
+          extractor_name: 'main'
+        )
+      end
+      let(:create_request) { post '/reductions/new_project_main_t0', params: reduction_json_payload, headers: create_request_headers }
+
+      before do
+        LabelExtractorDefinition.create!(
+          module_name: 'new_project',
+          extractor_name: 'main',
+          config: {
+            data_release_suffix: 'np',
+            task_key_label_prefixes: { T0: 'smooth-or-featured' },
+            task_key_data_labels: {
+              T0: {
+                '0': 'smooth',
+                '1': 'featured',
+                '2': 'artifact'
+              }
+            }
+          }
+        )
+      end
+
+      it 'creates a reduction using configurable labels' do
+        create_request
+
+        expect(response).to have_http_status(:created)
+        expect(json_parsed_response_body['labels']).to eq(
+          'smooth-or-featured-np_smooth' => 3,
+          'smooth-or-featured-np_featured' => 9,
+          'smooth-or-featured-np_artifact' => 0
+        )
+      end
+    end
+
     context 'with invalid authentication credentials' do
       let(:create_request_headers) do
         json_headers_with_basic_auth('unknown', 'credentials')
