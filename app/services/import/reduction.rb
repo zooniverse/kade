@@ -89,8 +89,19 @@ module Import
       unique_id = subject_metadata['id_str'] || subject_metadata['!id_str'] || subject_metadata['#id_str'] || subject_metadata['#id_field']
       return unique_id if unique_id
 
+      # fallback if objectId
+      unique_id = subject_metadata['objectId'] || subject_metadata['!objectId'] || subject_metadata['#objectId']
+      return unique_id if unique_id
+
+      # fallback if fileId
+      unique_id = subject_metadata['fileId'] || subject_metadata['!fileId'] || subject_metadata['#fileId']
+      return unique_id if unique_id
+
       # staging has older data with different subject metadata - fallback to handling this special env case
-      subject_metadata['!SDSS_ID'] if Rails.env.staging? || Rails.env.test?
+      return subject_metadata['!SDSS_ID'] if Rails.env.staging? || Rails.env.test?
+
+      # fallback if to subject id
+      zooniverse_subject_id.to_s
     end
 
     # use a custom label extractor (injected at run time)

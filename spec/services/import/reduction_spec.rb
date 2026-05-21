@@ -107,6 +107,13 @@ RSpec.describe Import::Reduction do
         reduction_model_staging = described_class.new(staging_payload, label_extractor).run
         expect(reduction_model_staging.unique_id).to match('1237663785278570672')
       end
+
+      it 'falls back to the Zooniverse subject id when no metadata identifier exists' do
+        allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new('production'))
+        raw_payload[:subject]['metadata'].delete('id')
+        reduction_model_staging = described_class.new(raw_payload, label_extractor).run
+        expect(reduction_model_staging.unique_id).to match(zooniverse_subject_id.to_s)
+      end
     end
 
     context 'with a existing duplicate reduction' do
