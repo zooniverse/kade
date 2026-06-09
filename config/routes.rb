@@ -59,5 +59,13 @@ Rails.application.routes.draw do
 
   resources :contexts, only: %i[index show update]
 
+  namespace :admin do
+    root 'contexts#index'
+    resources :contexts, only: %i[index show new create edit update destroy] do
+      resources :label_extractor_definitions, only: %i[index], module: :contexts
+    end
+    resources :label_extractor_definitions, only: %i[index new create edit update destroy]
+  end
+
   # all other routes go here
 end

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= content_for?(:title) ? yield(:title) : 'KaDE' %></title>
+    <link rel="stylesheet" href="/admin.css" />
+    <%= csrf_meta_tags %>
+  </head>
+  <body>
+    <header>
+      <nav class="navbar navbar-default">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="<%= admin_root_path %>"><span class="navbar-logo" aria-hidden="true"></span>KaDE</a>
+          </div>
+          <div class="navbar-collapse">
+            <ul class="nav navbar-nav">
+              <li><%= link_to 'Contexts', admin_contexts_path %></li>
+              <li><%= link_to 'Label Extractors', admin_label_extractor_definitions_path %></li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <% if flash[:alert] %>
+            <div class="alert alert-warning"><%= flash[:alert] %></div>
+          <% end %>
+          <% if flash[:notice] %>
+            <div class="alert alert-success"><%= flash[:notice] %></div>
+          <% end %>
+          <% if flash[:error] %>
+            <div class="alert alert-warning"><%= flash[:error] %></div>
+          <% end %>
+        </div>
+      </div>
+      <%= yield %>
+    </div>
+    <script>
+      (() => {
+        const normalizeJson = (value) => JSON.stringify(JSON.parse(value), null, 2);
+
+        const setStatus = (textarea, statusElement, kind, message) => {
+          textarea.classList.remove('json-valid', 'json-invalid');
+          statusElement.classList.remove('is-valid', 'is-invalid');
+
+          if (!kind) {
+            statusElement.textContent = '';
+            return;
+          }
+
+          textarea.classList.add(kind === 'valid' ? 'json-valid' : 'json-invalid');
+          statusElement.classList.add(kind === 'valid' ? 'is-valid' : 'is-invalid');
+          statusElement.textContent = message;
+        };
+
+        const validateJson = (textarea, statusElement) => {
+          const rawValue = textarea.value.trim();
+          const fieldName = textarea.dataset.jsonFieldName || 'JSON';
+
+          if (rawValue === '') {
+            setStatus(textarea, statusElement, 'valid', `${fieldName} is empty. It will be treated as {}.`);
+            return { valid: true, normalized: '' };
+          }
+
+          try {
+            const normalized = normalizeJson(rawValue);
+            setStatus(textarea, statusElement, 'valid', `${fieldName} is valid JSON.`);
+            return { valid: true, normalized };
+          } catch (error) {
+            setStatus(textarea, statusElement, 'invalid', `${fieldName} is invalid JSON: ${error.message}`);
+            return { valid: false, normalized: null };
+          }
+        };
+
+        const attachJsonEditor = (textarea) => {
+          const statusElement = textarea.parentElement.querySelector('.json-editor-status');
+          if (!statusElement) return;
+
+          const runValidation = () => validateJson(textarea, statusElement);
+
+          textarea.addEventListener('input', () => {
+            runValidation();
+          });
+
+          textarea.addEventListener('blur', () => {
+            const result = runValidation();
+            if (result.valid && result.normalized && textarea.value !== result.normalized) {
+              textarea.value = result.normalized;
+            }
+          });
+
+          textarea.closest('form')?.addEventListener('submit', (event) => {
+            const result = runValidation();
+            if (!result.valid) {
+              event.preventDefault();
+              textarea.focus();
+              return;
+            }
+
+            if (result.normalized && textarea.value !== result.normalized) {
+              textarea.value = result.normalized;
+            }
+          });
+
+          runValidation();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+          document.querySelectorAll('textarea[data-json-editor="true"]').forEach(attachJsonEditor);
+        });
+      })();
+    </script>
+  </body>
+</html>

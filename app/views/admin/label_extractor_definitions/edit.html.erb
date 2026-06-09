@@ -1,0 +1,11 @@
+<div class="row">
+  <div class="col-md-12">
+    <h2>Edit Label Extractor Definition <%= @definition.id %></h2>
+  <%= render 'form',
+    form_model: @definition,
+    form_url: admin_label_extractor_definition_path(@definition),
+    form_method: :patch,
+    return_to: @return_to,
+    submit_label: 'Save definition' %>
+  </div>
+</div>

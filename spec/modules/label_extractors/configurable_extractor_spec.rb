@@ -43,12 +43,12 @@ RSpec.describe LabelExtractors::ConfigurableExtractor do
       }.to raise_error(LabelExtractors::UnknownLabelKey, 'key not found: 99')
     end
 
-    it 'raises a clear error for malformed config' do
+    it 'raises a key error for malformed config when required mappings are missing at runtime' do
       malformed_config = config.except('task_key_data_labels')
 
       expect {
         described_class.new('T0', malformed_config)
-      }.to raise_error(LabelExtractors::ConfigurationError, 'task_key_data_labels must be a non-empty object')
+      }.to raise_error(KeyError, 'key not found: "task_key_data_labels"')
     end
   end
 

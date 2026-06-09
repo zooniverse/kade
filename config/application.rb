@@ -34,6 +34,8 @@ module Kade
     # Long term this can switch to Zooniverse API JWT token auth & pundit authorization schemes
     config.api_basic_auth_username = ENV.fetch('API_BASIC_AUTH_USERNAME', 'kade-user')
     config.api_basic_auth_password = ENV.fetch('API_BASIC_AUTH_PASSWORD', 'kade-password')
+    config.admin_basic_auth_username = ENV.fetch('ADMIN_BASIC_AUTH_USERNAME', config.api_basic_auth_username)
+    config.admin_basic_auth_password = ENV.fetch('ADMIN_BASIC_AUTH_PASSWORD', config.api_basic_auth_password)
 
     # Reduction ingester basic auth scheme (Caesar etc)
     config.reduction_basic_auth_username = ENV.fetch('REDUCTION_BASIC_AUTH_USERNAME', 'kade-user')
@@ -46,5 +48,7 @@ module Kade
     # Required for all session management (regardless of session_store)
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use config.session_store, config.session_options
+    config.middleware.use ActionDispatch::Flash
+    config.middleware.use Rack::MethodOverride
   end
 end
