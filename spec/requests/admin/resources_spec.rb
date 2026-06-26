@@ -157,4 +157,30 @@ RSpec.describe 'Admin resource pages', type: :request do
       expect(response.body).to include('https://example.com/training.csv')
     end
   end
+
+  describe 'context manual triggers' do
+    it 'queues a prediction job trigger from the context page' do
+      allow(PredictionManifestExportJob).to receive(:perform_async).with(context.id).and_return('prediction-jid-123')
+
+      post "/admin/contexts/#{context.id}/trigger_prediction_job", headers: request_headers
+
+      expect(response).to redirect_to("/admin/contexts/#{context.id}")
+      get "/admin/contexts/#{context.id}", headers: request_headers
+
+      expect(response.body).to include('Prediction job trigger queued')
+      expect(PredictionManifestExportJob).to have_received(:perform_async).with(context.id).once
+    end
+
+    it 'queues a training job trigger from the context page' do
+      allow(RetrainZoobotJob).to receive(:perform_async).with(context.id).and_return('training-jid-123')
+
+      post "/admin/contexts/#{context.id}/trigger_training_job", headers: request_headers
+
+      expect(response).to redirect_to("/admin/contexts/#{context.id}")
+      get "/admin/contexts/#{context.id}", headers: request_headers
+
+      expect(response.body).to include('Training job trigger queued')
+      expect(RetrainZoobotJob).to have_received(:perform_async).with(context.id).once
+    end
+  end
 end

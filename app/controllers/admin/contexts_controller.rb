@@ -51,6 +51,18 @@ module Admin
       redirect_to admin_context_path(@context), notice: 'Context updated'
     end
 
+    def trigger_prediction_job
+      context = Context.find(params[:id])
+      job_id = PredictionManifestExportJob.perform_async(context.id)
+      redirect_to admin_context_path(context), notice: "Prediction job with id #{job_id} triggered"
+    end
+
+    def trigger_training_job
+      context = Context.find(params[:id])
+      job_id = RetrainZoobotJob.perform_async(context.id)
+      redirect_to admin_context_path(context), notice: "Training job with id #{job_id} triggered"
+    end
+
     def destroy
       context = Context.find(params[:id])
       context.destroy!

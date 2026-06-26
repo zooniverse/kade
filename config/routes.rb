@@ -62,6 +62,11 @@ Rails.application.routes.draw do
   namespace :admin do
     root 'contexts#index'
     resources :contexts, only: %i[index show new create edit update destroy] do
+      member do
+        post :trigger_prediction_job
+        post :trigger_training_job
+      end
+
       resources :label_extractor_definitions, only: %i[index], module: :contexts
     end
     resources :label_extractor_definitions, only: %i[index new create edit update destroy]
