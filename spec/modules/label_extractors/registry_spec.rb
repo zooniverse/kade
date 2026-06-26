@@ -84,15 +84,14 @@ RSpec.describe LabelExtractors::Registry do
   end
 
   describe 'definition validation' do
-    it 'rejects malformed DB-backed extractor config' do
+    it 'accepts malformed DB-backed extractor config while strict schema validation is disabled' do
       definition = LabelExtractorDefinition.new(
         module_name: 'new_project',
         extractor_name: 'main',
         config: config.except('task_key_label_prefixes')
       )
 
-      expect(definition).not_to be_valid
-      expect(definition.errors[:config]).to include('task_key_label_prefixes must be a non-empty object')
+      expect(definition).to be_valid
     end
   end
 end

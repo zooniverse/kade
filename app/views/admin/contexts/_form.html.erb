@@ -1,0 +1,45 @@
+<%= form_with model: form_model, url: form_url, method: form_method do |form| %>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="form-group">
+        <%= form.label :workflow_id %>
+        <%= form.number_field :workflow_id, class: 'form-control' %>
+      </div>
+      <div class="form-group">
+        <%= form.label :project_id %>
+        <%= form.number_field :project_id, class: 'form-control' %>
+      </div>
+      <div class="form-group">
+        <%= form.label :active_subject_set_id %>
+        <%= form.number_field :active_subject_set_id, class: 'form-control' %>
+      </div>
+      <div class="form-group">
+        <%= form.label :pool_subject_set_id %>
+        <%= form.number_field :pool_subject_set_id, class: 'form-control' %>
+      </div>
+      <div class="form-group">
+        <%= form.label :module_name %>
+        <%= form.text_field :module_name, class: 'form-control' %>
+      </div>
+      <div class="form-group">
+        <%= form.label :extractor_name %>
+        <%= form.text_field :extractor_name, class: 'form-control' %>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= form.label :metadata_json, 'Metadata JSON' %>
+    <%= form.text_area :metadata_json,
+      value: pretty_json(form_model.metadata),
+      class: 'form-control json-editor',
+      data: {
+        json_editor: true,
+        json_field_name: 'Metadata JSON'
+      } %>
+    <p class="help-block">The admin UI edits metadata as raw JSON. Existing keys are preserved unless overwritten. Valid JSON is formatted when the field loses focus or the form is submitted.</p>
+    <p class="help-block json-editor-status" aria-live="polite"></p>
+  </div>
+
+  <%= form.submit submit_label, class: 'btn btn-primary' %>
+<% end %>

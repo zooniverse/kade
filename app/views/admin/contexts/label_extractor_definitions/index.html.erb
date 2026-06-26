@@ -1,0 +1,37 @@
+<div class="row">
+  <div class="col-md-12">
+    <h2>Definitions for Context <%= @context.id %></h2>
+    <p class="text-muted">Only definitions matching <code><%= @context.module_name %>/<%= @context.extractor_name %></code> are shown here.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+  <% if @definitions.any? %>
+    <table class="table table-striped table-sm">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Enabled</th>
+          <th>Updated</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @definitions.each do |definition| %>
+          <tr>
+            <td><%= link_to definition.id, edit_admin_label_extractor_definition_path(definition) %></td>
+            <td><%= definition.enabled? ? 'Yes' : 'No' %></td>
+            <td><%= definition.updated_at %></td>
+            <td class="table-actions">
+              <%= link_to 'Edit', edit_admin_label_extractor_definition_path(definition), class: 'btn btn-default' %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="text-muted">No matching DB-backed definitions exist yet.</p>
+  <% end %>
+  </div>
+</div>

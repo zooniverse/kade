@@ -1,0 +1,41 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="pull-right page-actions">
+      <%= link_to 'Add', new_admin_label_extractor_definition_path, class: 'btn btn-primary' %>
+    </div>
+    <h2>Label Extractor Definitions</h2>
+    <p class="text-muted">Global list of DB-backed extractor definitions.</p>
+    <table class="table table-striped table-sm">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Module</th>
+        <th>Extractor</th>
+        <th>Enabled</th>
+        <th>Updated</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @definitions.each do |definition| %>
+        <tr>
+          <td><%= link_to definition.id, edit_admin_label_extractor_definition_path(definition, return_to: admin_label_extractor_definitions_path) %></td>
+          <td><%= definition.module_name %></td>
+          <td><%= definition.extractor_name %></td>
+          <td><%= definition.enabled? ? 'Yes' : 'No' %></td>
+          <td><%= definition.updated_at %></td>
+          <td class="table-actions">
+            <%= link_to 'Edit', edit_admin_label_extractor_definition_path(definition, return_to: admin_label_extractor_definitions_path), class: 'btn btn-default' %>
+            <%= button_to 'Delete',
+              admin_label_extractor_definition_path(definition),
+              method: :delete,
+              class: 'btn btn-danger',
+              form_class: 'inline-form',
+              form: { onsubmit: "return confirm('Delete this definition?');" } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,45 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="pull-right page-actions">
+      <%= link_to 'Add', new_admin_context_path, class: 'btn btn-primary' %>
+      <%= link_to 'Label Extractors', admin_label_extractor_definitions_path, class: 'btn btn-primary' %>
+    </div>
+    <h2>Contexts</h2>
+    <table class="table table-striped table-sm">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Workflow ID</th>
+          <th>Project ID</th>
+          <th>Module</th>
+          <th>Extractor</th>
+          <th>Label Extractor Definition</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @contexts.each do |context| %>
+          <% matching_definitions = LabelExtractorDefinition.where(module_name: context.module_name, extractor_name: context.extractor_name) %>
+          <% enabled_definition = matching_definitions.find(&:enabled?) %>
+          <tr>
+            <td><%= link_to context.id, admin_context_path(context) %></td>
+            <td><%= context.workflow_id %></td>
+            <td><%= context.project_id %></td>
+            <td><%= context.module_name %></td>
+            <td><%= context.extractor_name %></td>
+            <td>
+              <% if enabled_definition %>
+                <span class="status-tag">Enabled</span>
+              <% elsif matching_definitions.any? %>
+                <span class="text-muted">Disabled</span>
+              <% else %>
+                <span class="text-muted">None</span>
+              <% end %>
+            </td>
+            <td><%= context.updated_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

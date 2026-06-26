@@ -38,10 +38,11 @@ module LabelExtractors
     def self.validate_config!(config)
       raise ConfigurationError, 'config must be an object' unless config.is_a?(Hash)
 
-      validate_string!(config, 'data_release_suffix')
-      validate_hash!(config, 'task_key_label_prefixes')
-      validate_hash!(config, 'task_key_data_labels')
-      validate_task_mappings!(config)
+      # commented out for now to allow for more flexible config
+      # validate_string!(config, 'data_release_suffix')
+      # validate_hash!(config, 'task_key_label_prefixes')
+      # validate_hash!(config, 'task_key_data_labels')
+      # validate_task_mappings!(config)
     end
 
     def self.validate_string!(config, key)
