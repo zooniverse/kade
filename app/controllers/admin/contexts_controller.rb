@@ -20,7 +20,7 @@ module Admin
     end
 
     def index
-      @contexts = Context.order(id: :desc).limit(params_page_size)
+      @contexts, @pagination = paginate(Context.order(id: :desc))
     end
 
     def show

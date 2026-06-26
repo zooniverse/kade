@@ -65,6 +65,11 @@ Rails.application.routes.draw do
       resources :label_extractor_definitions, only: %i[index], module: :contexts
     end
     resources :label_extractor_definitions, only: %i[index new create edit update destroy]
+    resources :subjects, only: %i[index show]
+    resources :reductions, only: %i[index show]
+    resources :training_data_exports, only: %i[index show]
+    resources :prediction_jobs, only: %i[index show]
+    resources :training_jobs, only: %i[index show]
   end
 
   # all other routes go here

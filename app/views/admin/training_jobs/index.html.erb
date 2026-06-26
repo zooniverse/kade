@@ -1,0 +1,28 @@
+<div class="row">
+  <div class="col-md-12">
+    <h2>Training Jobs</h2>
+    <table class="table table-striped table-sm">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Workflow ID</th>
+          <th>State</th>
+          <th>Manifest URL</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @training_jobs.each do |training_job| %>
+          <tr>
+            <td><%= link_to training_job.id, admin_training_job_path(training_job) %></td>
+            <td><%= training_job.workflow_id %></td>
+            <td><%= training_job.state %></td>
+            <td><%= training_job.manifest_url %></td>
+            <td><%= training_job.updated_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%= render 'admin/shared/pagination', pagination: @pagination %>
+  </div>
+</div>

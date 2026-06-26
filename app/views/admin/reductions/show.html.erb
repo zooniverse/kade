@@ -1,0 +1,53 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="page-actions">
+      <%= link_to 'Back to reductions', admin_reductions_path, class: 'btn btn-default' %>
+      <% if @reduction.subject_id.present? %>
+        <%= link_to 'View subject', admin_subject_path(@reduction.subject_id), class: 'btn btn-default' %>
+      <% end %>
+    </div>
+    <h2>Reduction <%= @reduction.id %></h2>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <table class="table table-striped table-sm">
+      <tbody>
+        <tr><th>Workflow ID</th><td><%= @reduction.workflow_id %></td></tr>
+        <tr><th>Zooniverse Subject ID</th><td><%= @reduction.zooniverse_subject_id %></td></tr>
+        <tr><th>Task Key</th><td><%= @reduction.task_key %></td></tr>
+        <tr>
+          <th>Subject</th>
+          <td>
+            <% if @reduction.subject_id.present? %>
+              <%= link_to @reduction.subject_id, admin_subject_path(@reduction.subject_id) %>
+            <% else %>
+              None
+            <% end %>
+          </td>
+        </tr>
+        <tr><th>Unique ID</th><td><%= @reduction.unique_id %></td></tr>
+        <tr><th>Updated</th><td><%= @reduction.updated_at %></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <h3>Labels</h3>
+    <div class="well">
+      <pre><%= pretty_json(@reduction.labels) %></pre>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <h3>Raw Payload</h3>
+    <div class="well">
+      <pre><%= pretty_json(@reduction.raw_payload) %></pre>
+    </div>
+  </div>
+</div>

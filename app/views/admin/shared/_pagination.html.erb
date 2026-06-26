@@ -1,0 +1,35 @@
+<% if pagination[:total_count] > 0 %>
+  <div class="admin-pagination">
+    <div class="admin-pagination-summary text-muted">
+      Page <%= pagination[:current_page] %> of <%= pagination[:total_pages] %>
+      (<%= pagination[:total_count] %> total)
+    </div>
+    <nav class="admin-pagination-actions" aria-label="Pagination">
+      <% if pagination[:has_previous] %>
+        <%= link_to '&laquo;&laquo;'.html_safe, pagination_path_for(1), class: 'btn btn-default', aria: { label: 'First page' } %>
+        <%= link_to '&laquo;'.html_safe, pagination_path_for(pagination[:current_page] - 1), class: 'btn btn-default', aria: { label: 'Previous page' } %>
+      <% else %>
+        <span class="btn btn-default disabled" aria-disabled="true">&laquo;&laquo;</span>
+        <span class="btn btn-default disabled" aria-disabled="true">&laquo;</span>
+      <% end %>
+
+      <% pagination_items(pagination[:total_pages], pagination[:current_page]).each do |item| %>
+        <% if item == :gap %>
+          <span class="btn btn-default disabled admin-pagination-gap" aria-hidden="true">...</span>
+        <% elsif item == pagination[:current_page] %>
+          <span class="btn btn-primary active" aria-current="page"><%= item %></span>
+        <% else %>
+          <%= link_to item, pagination_path_for(item), class: 'btn btn-default', aria: { label: "Page #{item}" } %>
+        <% end %>
+      <% end %>
+
+      <% if pagination[:has_next] %>
+        <%= link_to '&raquo;'.html_safe, pagination_path_for(pagination[:current_page] + 1), class: 'btn btn-default', aria: { label: 'Next page' } %>
+        <%= link_to '&raquo;&raquo;'.html_safe, pagination_path_for(pagination[:total_pages]), class: 'btn btn-default', aria: { label: 'Last page' } %>
+      <% else %>
+        <span class="btn btn-default disabled" aria-disabled="true">&raquo;</span>
+        <span class="btn btn-default disabled" aria-disabled="true">&raquo;&raquo;</span>
+      <% end %>
+    </nav>
+  </div>
+<% end %>

@@ -16,7 +16,7 @@ module Admin
     end
 
     def index
-      @definitions = LabelExtractorDefinition.order(updated_at: :desc).limit(params_page_size)
+      @definitions, @pagination = paginate(LabelExtractorDefinition.order(updated_at: :desc))
     end
 
     def new

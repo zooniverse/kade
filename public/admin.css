@@ -241,6 +241,15 @@ h3 { font-size: 26px; }
   text-decoration: none;
 }
 
+.btn.disabled,
+.btn[aria-disabled="true"] {
+  color: var(--zooniverse-mid-grey);
+  background-color: var(--zooniverse-light-grey);
+  border-color: #d7dde3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .btn-danger {
   color: var(--white);
   background-color: var(--zooniverse-tomato);
@@ -395,4 +404,34 @@ pre {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.admin-pagination-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-pagination-actions .btn {
+  min-width: 42px;
+}
+
+.admin-pagination-actions .btn.active {
+  cursor: default;
+  pointer-events: none;
+}
+
+.admin-pagination-gap {
+  min-width: 52px;
 }
