@@ -1,0 +1,36 @@
+<div class="row">
+  <div class="col-md-12">
+    <h2>Reductions</h2>
+    <table class="table table-striped table-sm">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Workflow ID</th>
+          <th>Zooniverse Subject ID</th>
+          <th>Task Key</th>
+          <th>Subject</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @reductions.each do |reduction| %>
+          <tr>
+            <td><%= link_to reduction.id, admin_reduction_path(reduction) %></td>
+            <td><%= reduction.workflow_id %></td>
+            <td><%= reduction.zooniverse_subject_id %></td>
+            <td><%= reduction.task_key %></td>
+            <td>
+              <% if reduction.subject_id.present? %>
+                <%= link_to reduction.subject_id, admin_subject_path(reduction.subject_id) %>
+              <% else %>
+                <span class="text-muted">None</span>
+              <% end %>
+            </td>
+            <td><%= reduction.updated_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%= render 'admin/shared/pagination', pagination: @pagination %>
+  </div>
+</div>

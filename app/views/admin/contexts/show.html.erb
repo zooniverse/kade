@@ -2,6 +2,18 @@
   <div class="col-md-12">
     <div class="page-actions">
       <%= link_to 'Edit context', edit_admin_context_path(@context), class: 'btn btn-default' %>
+      <%= button_to 'Trigger prediction job',
+        trigger_prediction_job_admin_context_path(@context),
+        method: :post,
+        class: 'btn btn-primary',
+        form_class: 'inline-form',
+        form: { onsubmit: "return confirm('Trigger a prediction job for this context?');" } %>
+      <%= button_to 'Trigger training job',
+        trigger_training_job_admin_context_path(@context),
+        method: :post,
+        class: 'btn btn-primary',
+        form_class: 'inline-form',
+        form: { onsubmit: "return confirm('Trigger a training job for this context?');" } %>
     </div>
     <h2>Context <%= @context.id %></h2>
   </div>

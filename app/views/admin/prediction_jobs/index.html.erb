@@ -1,0 +1,30 @@
+<div class="row">
+  <div class="col-md-12">
+    <h2>Prediction Jobs</h2>
+    <table class="table table-striped table-sm">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>State</th>
+          <th>Subject Set ID</th>
+          <th>Probability Threshold</th>
+          <th>Randomisation Factor</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @prediction_jobs.each do |prediction_job| %>
+          <tr>
+            <td><%= link_to prediction_job.id, admin_prediction_job_path(prediction_job) %></td>
+            <td><%= prediction_job.state %></td>
+            <td><%= prediction_job.subject_set_id %></td>
+            <td><%= prediction_job.probability_threshold %></td>
+            <td><%= prediction_job.randomisation_factor %></td>
+            <td><%= prediction_job.updated_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%= render 'admin/shared/pagination', pagination: @pagination %>
+  </div>
+</div>

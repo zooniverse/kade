@@ -20,7 +20,7 @@ module Admin
     end
 
     def index
-      @contexts = Context.order(id: :desc).limit(params_page_size)
+      @contexts, @pagination = paginate(Context.order(id: :desc))
     end
 
     def show
@@ -49,6 +49,18 @@ module Admin
       @context = Context.find(params[:id])
       ::Contexts::UpdateAttributes.new(context: @context, params: context_form_params).call
       redirect_to admin_context_path(@context), notice: 'Context updated'
+    end
+
+    def trigger_prediction_job
+      context = Context.find(params[:id])
+      job_id = PredictionManifestExportJob.perform_async(context.id)
+      redirect_to admin_context_path(context), notice: "Prediction job with id #{job_id} triggered"
+    end
+
+    def trigger_training_job
+      context = Context.find(params[:id])
+      job_id = RetrainZoobotJob.perform_async(context.id)
+      redirect_to admin_context_path(context), notice: "Training job with id #{job_id} triggered"
     end
 
     def destroy

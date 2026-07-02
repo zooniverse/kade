@@ -1,0 +1,24 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="page-actions">
+      <%= link_to 'Back to training data exports', admin_training_data_exports_path, class: 'btn btn-default' %>
+    </div>
+    <h2>Training Data Export <%= @training_data_export.id %></h2>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <table class="table table-striped table-sm">
+      <tbody>
+        <tr><th>Workflow ID</th><td><%= @training_data_export.workflow_id %></td></tr>
+        <tr><th>State</th><td><%= @training_data_export.state %></td></tr>
+        <tr><th>Storage Path</th><td><%= @training_data_export.storage_path %></td></tr>
+        <tr><th>Storage Path Key</th><td><%= @training_data_export.storage_path_key %></td></tr>
+        <tr><th>File Name</th><td><%= @training_data_export.storage_path_file_name %></td></tr>
+        <tr><th>File Attached</th><td><%= @training_data_export.file.attached? ? 'Yes' : 'No' %></td></tr>
+        <tr><th>Updated</th><td><%= @training_data_export.updated_at %></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
