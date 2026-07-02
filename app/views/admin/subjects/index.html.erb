@@ -8,7 +8,6 @@
           <th>Zooniverse Subject ID</th>
           <th>Context</th>
           <th>Reductions</th>
-          <th>Predictions</th>
           <th>Updated</th>
         </tr>
       </thead>
@@ -19,7 +18,6 @@
             <td><%= subject.zooniverse_subject_id %></td>
             <td><%= link_to subject.context_id, admin_context_path(subject.context_id) %></td>
             <td><%= subject.reductions.size %></td>
-            <td><%= subject.predictions.size %></td>
             <td><%= subject.updated_at %></td>
           </tr>
         <% end %>

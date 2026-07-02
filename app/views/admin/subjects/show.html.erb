@@ -15,7 +15,6 @@
         <tr><th>Zooniverse Subject ID</th><td><%= @subject.zooniverse_subject_id %></td></tr>
         <tr><th>Context</th><td><%= link_to @subject.context_id, admin_context_path(@subject.context) %></td></tr>
         <tr><th>Reductions</th><td><%= @subject.reductions.size %></td></tr>
-        <tr><th>Predictions</th><td><%= @subject.predictions.size %></td></tr>
         <tr><th>Updated</th><td><%= @subject.updated_at %></td></tr>
       </tbody>
     </table>
