@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
+    <link rel="icon" href="https://static.zooniverse.org/www.zooniverse.org/favicon.ico">
+    <link rel="stylesheet" href="{{ "/assets/css/site.css" | relative_url }}">
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="{{ "/" | relative_url }}" aria-label="{{ site.title }}">
+          <img class="brand-logo" src="{{ "/assets/img/zooniverse.svg" | relative_url }}" alt="" aria-hidden="true">
+          <span>{{ site.title }}</span>
+        </a>
+        <form class="search-form" role="search">
+          <label class="search" for="site-search">
+            <span class="search-icon" aria-hidden="true"></span>
+            <input id="site-search" type="search" placeholder="Search" autocomplete="off">
+          </label>
+          <div id="search-results" class="search-results" role="listbox"></div>
+        </form>
+        <nav class="topnav" aria-label="Top navigation">
+          <a href="{{ "/" | relative_url }}">Home</a>
+          <a href="{{ "/new-workflow-configuration/" | relative_url }}">Workflow Configuration</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="shell">
+      <aside class="sidebar" aria-label="Documentation navigation">
+        <p class="nav-label">Documentation</p>
+        <ul class="doc-nav">
+          <li><a href="{{ "/" | relative_url }}"{% if page.url == "/" %} aria-current="page"{% endif %}>Overview</a></li>
+          <li><a href="{{ "/new-workflow-configuration/" | relative_url }}"{% if page.url == "/new-workflow-configuration/" %} aria-current="page"{% endif %}>New Workflow Configuration</a></li>
+        </ul>
+      </aside>
+
+      <main id="content" class="article">
+        <div class="mobile-summary">
+          <a href="{{ "/" | relative_url }}">Overview</a>
+          <a href="{{ "/new-workflow-configuration/" | relative_url }}">New Workflow Configuration</a>
+        </div>
+        {{ content }}
+      </main>
+
+      <aside class="toc" aria-label="Table of contents">
+        <p class="toc-title">Table of contents</p>
+        <ul id="toc-list" class="toc-list"></ul>
+      </aside>
+    </div>
+
+    <script>
+      (() => {
+        const tocList = document.getElementById('toc-list');
+
+        const headings = Array.from(document.querySelectorAll('.article h2'));
+        if (tocList && headings.length === 0) {
+          tocList.closest('.toc')?.remove();
+        }
+
+        headings.forEach((heading) => {
+          if (!heading.id) {
+            heading.id = heading.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          }
+
+          if (!tocList) return;
+
+          const item = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = `#${heading.id}`;
+          link.textContent = heading.textContent;
+          item.appendChild(link);
+          tocList.appendChild(item);
+        });
+
+        const searchForm = document.querySelector('.search-form');
+        const searchInput = document.getElementById('site-search');
+        const searchResults = document.getElementById('search-results');
+        if (!searchForm || !searchInput || !searchResults) return;
+
+        const pages = [
+          { title: 'Overview', url: '{{ "/" | relative_url }}' },
+          { title: 'Active Learning Loop: New Workflow Configuration', url: '{{ "/new-workflow-configuration/" | relative_url }}' }
+        ];
+
+        const headingResults = headings.map((heading) => ({
+          title: heading.textContent,
+          url: `#${heading.id}`
+        }));
+
+        const closeResults = () => {
+          searchResults.classList.remove('is-open');
+          searchResults.innerHTML = '';
+        };
+
+        const renderResults = (query) => {
+          const normalized = query.trim().toLowerCase();
+          searchResults.innerHTML = '';
+
+          if (!normalized) {
+            closeResults();
+            return [];
+          }
+
+          const matches = [...pages, ...headingResults]
+            .filter((item) => item.title.toLowerCase().includes(normalized))
+            .slice(0, 6);
+
+          if (matches.length === 0) {
+            searchResults.innerHTML = '<span class="search-empty">No matching documentation</span>';
+            searchResults.classList.add('is-open');
+            return [];
+          }
+
+          matches.forEach((item) => {
+            const link = document.createElement('a');
+            link.href = item.url;
+            link.textContent = item.title;
+            searchResults.appendChild(link);
+          });
+
+          searchResults.classList.add('is-open');
+          return matches;
+        };
+
+        searchInput.addEventListener('input', () => renderResults(searchInput.value));
+
+        searchForm.addEventListener('submit', (event) => {
+          event.preventDefault();
+          const [firstMatch] = renderResults(searchInput.value);
+          if (firstMatch) window.location.href = firstMatch.url;
+        });
+
+        document.addEventListener('click', (event) => {
+          if (!searchForm.contains(event.target)) closeResults();
+        });
+      })();
+    </script>
+  </body>
+</html>
