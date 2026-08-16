@@ -33,7 +33,18 @@ class TrainingJobMonitorJob
       # this information is encoded into the context resource for the workflow, i.e. the
       # pool subject set is the source data for prediciton
       # active subject set is the target for results
-      PredictionManifestExportJob.perform_async(context.id)
+      begin
+        prediction_manifest_export_job_id = PredictionManifestExportJob.perform_async(context.id)
+        Honeybadger.notify(
+          StandardError.new('TrainingJobMonitorJob did not enqueue PredictionManifestExportJob'),
+          context: {
+            current_step: 'enqueue_prediction_manifest_export_job'
+          }
+        ) unless prediction_manifest_export_job_id
+      rescue StandardError => e
+        Honeybadger.notify(e, context: { current_step: 'enqueue_prediction_manifest_export_job' })
+        raise
+      end
     else
       # reschedule this job to run again in 1 minute
       TrainingJobMonitorJob.perform_in(MONITOR_JOB_RESCHEDULE_DELAY.minute, training_job.id, context.id)
