@@ -30,6 +30,73 @@ We only support running KaDE via Docker and Docker Compose. If you'd like to run
 
     * Run the tests in the container `docker compose run --service-ports --rm api RAILS_ENV=test bin/rspec`
 
+## Documentation Site
+
+The `docs/` directory is configured as a lightweight GitHub Pages site. The New Workflow Configuration runbook is available in the repo at `docs/configuring-new-workflow-active-learning-loop.md` and will publish as `/new-workflow-configuration/`.
+
+Preview the site locally with:
+
+```sh
+cd docs
+bundle config set path vendor/bundle
+bundle install
+bundle exec jekyll serve --host 127.0.0.1 --port 4000
+
+```
+
+Then open `http://127.0.0.1:4000/new-workflow-configuration/`.
+
+To enable it on GitHub:
+
+1. Open the repository `Settings` page.
+2. Go to `Pages`.
+3. Under `Build and deployment`, set `Source` to `Deploy from a branch`.
+4. Select the default branch and `/docs` as the folder.
+5. Save the settings.
+
+For a normal project Pages site, the published runbook URL will be:
+
+```text
+https://<owner>.github.io/<repository>/new-workflow-configuration/
+```
+
+## Admin UI
+
+KaDE includes a server-rendered Rails admin surface for internal operators. When running locally through Docker Compose, open `http://localhost:3001/admin`.
+
+### Authentication
+
+The admin UI is protected with HTTP basic auth. Configure dedicated admin credentials with:
+
+* `ADMIN_BASIC_AUTH_USERNAME`
+* `ADMIN_BASIC_AUTH_PASSWORD`
+
+If these values are not set, the app falls back to `API_BASIC_AUTH_USERNAME` and `API_BASIC_AUTH_PASSWORD`. In development, those API credentials default to `kade-user` / `kade-password`. Production and staging deployments should set admin-specific credentials and keep them separate from service-to-service API credentials.
+
+### Admin resources
+
+The admin navigation exposes the following resources:
+
+* `Contexts` (`/admin/contexts`) - list, create, view, edit, and delete context records. Context forms support workflow ID, project ID, active subject set ID, pool subject set ID, module name, extractor name, and metadata JSON. The admin flow uses the same validation as the JSON API for integer fields, metadata shape, `metadata.batch` runtime configuration, and known module/extractor pairs.
+* `Label Extractors` (`/admin/label_extractor_definitions`) - list, create, edit, enable, disable, and delete DB-backed label extractor definitions. Definitions are keyed by `module_name` and `extractor_name`; config is edited as structured JSON and validated against the configurable extractor schema. Context detail pages show matching definitions for that context's module/extractor pair.
+* `Subjects` (`/admin/subjects`) - list and view subjects, including their context, metadata, locations, and reductions. The list can be filtered with `?zooniverse_subject_id=...`.
+* `Reductions` (`/admin/reductions`) - list and view reductions, including their linked subject, labels, and raw payload. The list can be filtered with `?zooniverse_subject_id=...`.
+* `Training Exports` (`/admin/training_data_exports`) - list and view training data export records.
+* `Prediction Jobs` (`/admin/prediction_jobs`) - list and view prediction job records, including state, messages, manifests, results, and subject set settings.
+* `Training Jobs` (`/admin/training_jobs`) - list and view training job records, including state, messages, manifests, results, and workflow IDs.
+
+Admin list pages support `?page=` and `?page_size=` query parameters. The default page size is 25 records and `page_size` is clamped between 1 and 100.
+
+### Operational actions
+
+Context detail pages include manual actions for:
+
+* Triggering a prediction run, which enqueues `PredictionManifestExportJob` for the context.
+* Triggering a training run, which enqueues `RetrainZoobotJob` for the context.
+* Deleting the context. Deletion uses the model restrictions, so it fails while subjects still reference that context.
+
+The admin UI is intended as an internal maintenance surface for inspection and controlled manual corrections. Use the JSON API for service-to-service integration.
+
 ## API
 
 The KaDE service has a json API for the following resource
