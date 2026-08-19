@@ -28,6 +28,7 @@ RSpec.describe Batch::Prediction::ExportManifest do
       allow(service).to receive(:create_manifest_data)
       allow(service).to receive(:write_manifest_data_to_temp_file)
       allow(service).to receive(:upload_manifest_data_to_blob_storage).and_return(blob_double)
+      allow(Honeybadger).to receive(:notify)
     end
 
     it 'does not raise unexpected errors' do
@@ -47,6 +48,41 @@ RSpec.describe Batch::Prediction::ExportManifest do
       service.run
       expect(service.manifest_url).to eq("#{Bajor::Client::BLOB_STORE_HOST_CONTAINER_URL}/predictions#{blob_double.key}")
     end
+
+    it 'does not notify Honeybadger on success' do
+      service.run
+      expect(Honeybadger).not_to have_received(:notify)
+    end
+
+    context 'when the manifest upload fails' do
+      before do
+        allow(service).to receive(:upload_manifest_data_to_blob_storage).and_raise(StandardError, 'upload failed')
+      end
+
+      it 'notifies Honeybadger with the failed export step before reraising' do
+        expect { service.run }.to raise_error(StandardError, 'upload failed')
+
+        expect(Honeybadger).to have_received(:notify).with(
+          an_object_having_attributes(message: 'upload failed'),
+          context: { current_step: 'upload_manifest_data_to_blob_storage' }
+        )
+      end
+    end
+
+    context 'when temp file cleanup fails' do
+      before do
+        allow(service.temp_file).to receive(:close).and_raise(StandardError, 'cleanup failed')
+      end
+
+      it 'notifies Honeybadger with the cleanup step before reraising' do
+        expect { service.run }.to raise_error(StandardError, 'cleanup failed')
+
+        expect(Honeybadger).to have_received(:notify).with(
+          an_object_having_attributes(message: 'cleanup failed'),
+          context: { current_step: 'cleanup_temp_file' }
+        )
+      end
+    end
   end
 
   describe '#with_retries' do
@@ -56,10 +92,12 @@ RSpec.describe Batch::Prediction::ExportManifest do
 
     before do
       allow(described_class).to receive(:sleep)
+      allow(Honeybadger).to receive(:notify)
     end
 
     it 'retries a failing block up to max_retries then returns nil' do
       call_count = 0
+      service.current_step = 'fetch_subject_set_subject_ids'
 
       result = service.send(:with_retries, 2) do
         call_count += 1
@@ -68,6 +106,10 @@ RSpec.describe Batch::Prediction::ExportManifest do
 
       expect(call_count).to eq(2)
       expect(result).to be_nil
+      expect(Honeybadger).to have_received(:notify).with(
+        instance_of(StandardError),
+        context: { current_step: 'fetch_subject_set_subject_ids' }
+      )
     end
 
     it 'succeeds on the second attempt if first raises an exception' do
@@ -81,6 +123,7 @@ RSpec.describe Batch::Prediction::ExportManifest do
 
       expect(call_count).to eq(2)
       expect(result).to eq(call_count)
+      expect(Honeybadger).not_to have_received(:notify)
     end
   end
 end

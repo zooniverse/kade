@@ -2,6 +2,7 @@
 
 require 'panoptes/api'
 require 'json'
+require 'honeybadger/ruby'
 
 module Batch
   module Prediction
@@ -10,7 +11,8 @@ module Batch
 
       MAX_RETRIES = 3
       BASE_BACKOFF_SECONDS = 0.5
-      attr_accessor :subject_set_id, :panoptes_client_pool, :manifest_data, :subject_set, :project_id, :temp_file, :subject_set_subject_ids
+      attr_accessor :subject_set_id, :panoptes_client_pool, :manifest_data, :subject_set, :project_id,
+                    :temp_file, :subject_set_subject_ids, :current_step
       attr_reader :manifest_url
 
       def initialize(subject_set_id, panoptes_client_pool = nil)
@@ -23,27 +25,41 @@ module Batch
 
       def run
         panoptes_client_pool.with do |panoptes_client|
+          self.current_step = 'fetch_subject_set'
           @subject_set = panoptes_client.subject_set(subject_set_id)
           @project_id = subject_set.dig('links', 'project')
           # collection of the subject set subject ids
+          self.current_step = 'fetch_subject_set_subject_ids'
           fetch_subject_set_subject_ids(panoptes_client)
           # enumerate the subjects and create the manifest data
+          self.current_step = 'create_manifest_data'
           create_manifest_data(panoptes_client)
         end
 
         # write the manifest data to a temp file
+        self.current_step = 'write_manifest_data_to_temp_file'
         write_manifest_data_to_temp_file
 
         # upload the manifest to blob storage
+        self.current_step = 'upload_manifest_data_to_blob_storage'
         blob = upload_manifest_data_to_blob_storage
         # store the blob url for the uploaded prediction manifest
         # these are public URLs, long term we might want to turn these
         # into signed urls via blob.url etc.
         @manifest_url = "#{Bajor::Client::BLOB_STORE_HOST_CONTAINER_URL}/predictions#{blob.key}"
+      rescue StandardError => e
+        Honeybadger.notify(e, context: failure_context)
+        raise
       ensure
         # cleanup the temp file
-        temp_file.close
-        temp_file.unlink
+        self.current_step = 'cleanup_temp_file'
+        begin
+          temp_file.close
+          temp_file.unlink
+        rescue StandardError => e
+          Honeybadger.notify(e, context: failure_context)
+          raise
+        end
       end
 
       def fetch_subject_set_subject_ids(panoptes_client, slices = MANIFEST_SUBJECT_SET_BATCH_SIZE)
@@ -154,6 +170,12 @@ module Batch
 
 
       private
+      def failure_context
+        {
+          current_step: current_step
+        }
+      end
+
       def with_retries(max_retries = MAX_RETRIES)
         attempts = 0
 
@@ -172,6 +194,10 @@ module Batch
           else
             Rails.logger.warn(
               "[ExportManifest] All #{max_retries} attempts failed: #{e.class.name} – #{e.message}. Skipping."
+            )
+            Honeybadger.notify(
+              e,
+              context: failure_context
             )
             return nil
           end

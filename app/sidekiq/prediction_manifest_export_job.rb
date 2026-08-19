@@ -1,10 +1,17 @@
 # frozen_string_literal: true
 
+require 'honeybadger/ruby'
+
 class PredictionManifestExportJob
   include Sidekiq::Job
 
   def perform(context_id)
-    context = Context.find(context_id)
+    begin
+      context = Context.find(context_id)
+    rescue StandardError => e
+      Honeybadger.notify(e, context: { current_step: 'find_context' })
+      raise
+    end
 
     # NOTE: if we have a failure anywhere after this point sadly we pay the cost to recreate the manifest
     # ideally we'd add a PredictionExport resource model to track the creation
@@ -14,17 +21,43 @@ class PredictionManifestExportJob
     export_manifest_service.run
 
     # create a prediction job resource
-    prediction_job = PredictionJob.create!(
-      prediction_job_params(
-        # use the context's active subject set as the target for prediction results processing, i.e. add/remove subjects from this set
-        context.active_subject_set_id,
-        # use the newly minted manifest url from the export manifest service
-        export_manifest_service.manifest_url
+    begin
+      prediction_job = PredictionJob.create!(
+        prediction_job_params(
+          # use the context's active subject set as the target for prediction results processing, i.e. add/remove subjects from this set
+          context.active_subject_set_id,
+          # use the newly minted manifest url from the export manifest service
+          export_manifest_service.manifest_url
+        )
       )
-    )
+    rescue StandardError => e
+      Honeybadger.notify(
+        e,
+        context: {
+          current_step: 'create_prediction_job'
+        }
+      )
+      raise
+    end
 
     # submit the prediction job for processing
-    PredictionJobSubmissionJob.perform_async(prediction_job.id)
+    begin
+      prediction_job_submission_job_id = PredictionJobSubmissionJob.perform_async(prediction_job.id)
+      Honeybadger.notify(
+        StandardError.new('PredictionManifestExportJob did not enqueue PredictionJobSubmissionJob'),
+        context: {
+          current_step: 'enqueue_prediction_job_submission'
+        }
+      ) unless prediction_job_submission_job_id
+    rescue StandardError => e
+      Honeybadger.notify(
+        e,
+        context: {
+          current_step: 'enqueue_prediction_job_submission'
+        }
+      )
+      raise
+    end
   end
 
   private

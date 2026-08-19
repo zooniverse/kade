@@ -41,10 +41,11 @@ RSpec.describe TrainingJobMonitorJob, type: :job do
       before do
         allow(training_job_monitor_result).to receive(:completed?).and_return(true)
         allow(training_job_monitor_result).to receive(:workflow_id).and_return(1)
+        allow(PredictionManifestExportJob).to receive(:perform_async).and_return('prediction-manifest-export-job-id')
+        allow(Honeybadger).to receive(:notify)
       end
 
       it 'schedules a process prediction creation job with the correct pool_subject_set_id' do
-        allow(PredictionManifestExportJob).to receive(:perform_async)
         job.perform(training_job.id, context.id)
         expect(PredictionManifestExportJob).to have_received(:perform_async).with(context.id)
       end
@@ -53,6 +54,33 @@ RSpec.describe TrainingJobMonitorJob, type: :job do
         allow(described_class).to receive(:perform_in)
         job.perform(training_job.id, context.id)
         expect(described_class).not_to have_received(:perform_in)
+      end
+
+      it 'does not notify Honeybadger when the prediction manifest export job is queued' do
+        job.perform(training_job.id, context.id)
+        expect(Honeybadger).not_to have_received(:notify)
+      end
+
+      it 'notifies Honeybadger when the prediction manifest export job is not queued' do
+        allow(PredictionManifestExportJob).to receive(:perform_async).and_return(nil)
+        job.perform(training_job.id, context.id)
+        expect(Honeybadger).to have_received(:notify).with(
+          an_object_having_attributes(
+            message: 'TrainingJobMonitorJob did not enqueue PredictionManifestExportJob'
+          ),
+          context: { current_step: 'enqueue_prediction_manifest_export_job' }
+        )
+      end
+
+      it 'notifies Honeybadger when queuing the prediction manifest export job raises' do
+        allow(PredictionManifestExportJob).to receive(:perform_async).and_raise(StandardError, 'redis failed')
+
+        expect { job.perform(training_job.id, context.id) }.to raise_error(StandardError, 'redis failed')
+
+        expect(Honeybadger).to have_received(:notify).with(
+          an_object_having_attributes(message: 'redis failed'),
+          context: { current_step: 'enqueue_prediction_manifest_export_job' }
+        )
       end
     end
 
