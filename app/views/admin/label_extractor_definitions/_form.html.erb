@@ -1,9 +1,18 @@
 <% definition = form_model || LabelExtractorDefinition.new(enabled: true) %>
 <%
+  config_without_custom_schema = definition.config.to_h.except(LabelExtractors::ConfigurableExtractor::CUSTOM_SCHEMA_FLAG)
   config_json =
     local_assigns[:config_json_value].presence ||
     @config_json_value.presence ||
-    pretty_json(definition.config)
+    pretty_json(config_without_custom_schema)
+  build_custom_schema =
+    if local_assigns.key?(:build_custom_schema_value)
+      local_assigns[:build_custom_schema_value]
+    elsif instance_variable_defined?(:@build_custom_schema_value)
+      @build_custom_schema_value
+    else
+      LabelExtractors::ConfigurableExtractor.build_custom_schema?(definition.config)
+    end
 %>
 
 <%= form_with model: definition, url: form_url, method: form_method do |form| %>
@@ -21,6 +30,15 @@
       <%= form.check_box :enabled, checked: definition.enabled? %>
       Enabled
     </label>
+  </div>
+
+  <div class="form-group">
+    <%= hidden_field_tag 'label_extractor_definition[build_custom_schema]', '0' %>
+    <label>
+      <%= check_box_tag 'label_extractor_definition[build_custom_schema]', '1', build_custom_schema, id: 'label_extractor_definition_build_custom_schema' %>
+      Build custom schema
+    </label>
+    <p class="help-block">When enabled, KaDE sends a generated Zoobot custom schema to BaJoR and manifest labels omit the data release suffix.</p>
   </div>
 
   <div class="form-group">

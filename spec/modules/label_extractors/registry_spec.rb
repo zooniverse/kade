@@ -83,15 +83,49 @@ RSpec.describe LabelExtractors::Registry do
     end
   end
 
+  describe '.custom_schema' do
+    it 'returns nil for code-backed extractors' do
+      expect(described_class.custom_schema('galaxy_zoo', 'cosmic_dawn')).to be_nil
+    end
+
+    it 'returns nil for DB-backed extractors without custom schema building enabled' do
+      LabelExtractorDefinition.create!(
+        module_name: 'new_project',
+        extractor_name: 'main',
+        config: config
+      )
+
+      expect(described_class.custom_schema('new_project', 'main')).to be_nil
+    end
+
+    it 'builds a custom schema for enabled DB-backed extractor definitions' do
+      LabelExtractorDefinition.create!(
+        module_name: 'new_project',
+        extractor_name: 'main',
+        config: config.merge('build_custom_schema' => true)
+      )
+
+      expect(described_class.custom_schema('new_project', 'main')).to eq(
+        'question_answer_pairs' => {
+          'smooth-or-featured' => %w[_smooth]
+        },
+        'dependencies' => {
+          'smooth-or-featured' => nil
+        }
+      )
+    end
+  end
+
   describe 'definition validation' do
-    it 'accepts malformed DB-backed extractor config while strict schema validation is disabled' do
+    it 'rejects malformed DB-backed extractor config' do
       definition = LabelExtractorDefinition.new(
         module_name: 'new_project',
         extractor_name: 'main',
         config: config.except('task_key_label_prefixes')
       )
 
-      expect(definition).to be_valid
+      expect(definition).not_to be_valid
+      expect(definition.errors[:config]).to include('task_key_label_prefixes must be a non-empty object')
     end
   end
 end

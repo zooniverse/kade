@@ -3,7 +3,7 @@
 require 'bajor/client'
 require 'rails_helper'
 
-def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, fixed_crop: nil, n_blocks: nil, container_image_name: nil, training_script_path: nil, prediction_script_path: nil, promote_script_path: nil, pretrained_checkpoint_url: nil)
+def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, fixed_crop: nil, n_blocks: nil, container_image_name: nil, training_script_path: nil, prediction_script_path: nil, promote_script_path: nil, pretrained_checkpoint_url: nil, custom_schema_json: nil)
   opts = {
     workflow_name: workflow_name
   }
@@ -13,6 +13,7 @@ def build_expected_body(manifest_url: nil, manifest_path: nil, workflow_name:, f
   opts[:prediction_script_path] = prediction_script_path if prediction_script_path
   opts[:promote_script_path] = promote_script_path if promote_script_path
   opts[:pretrained_checkpoint_url] = pretrained_checkpoint_url if pretrained_checkpoint_url
+  opts[:custom_schema_json] = custom_schema_json if custom_schema_json
 
   run_opts = []
   run_opts << "--schema #{workflow_name}" if manifest_path
@@ -124,6 +125,124 @@ RSpec.describe Bajor::Client do
         ).to have_been_made.once
       end
 
+    end
+
+    context 'with a custom schema JSON string' do
+      let(:workflow_name) { 'gztt' }
+      let(:custom_schema_json) do
+        {
+          'question_answer_pairs' => {
+            'merger' => %w[_yes _no _artifact]
+          },
+          'dependencies' => {
+            'merger' => nil
+          }
+        }.to_json
+      end
+      let(:expected_body) do
+        build_expected_body(
+          manifest_path: catalogue_manifest_path,
+          workflow_name: workflow_name,
+          custom_schema_json: custom_schema_json
+        )
+      end
+      let(:request) do
+        stub_request(:post, request_url)
+          .with(
+            body: expected_body.to_json,
+            headers: request_headers
+          )
+      end
+
+      before do
+        request.to_return(status: 201, body: bajor_response_body.to_json, headers: { content_type: 'application/json' })
+      end
+
+      it 'passes the custom schema JSON string through to bajor options' do
+        bajor_client.create_training_job(
+          catalogue_manifest_path,
+          { workflow_name: workflow_name, custom_schema_json: custom_schema_json }
+        )
+
+        expect(
+          a_request(:post, request_url).with(body: expected_body, headers: request_headers)
+        ).to have_been_made.once
+      end
+    end
+
+    context 'with unsafe command-facing options' do
+      before do
+        request.to_return(status: 201, body: bajor_response_body.to_json, headers: { content_type: 'application/json' })
+      end
+
+      it 'rejects unsafe workflow names' do
+        expect {
+          bajor_client.create_training_job(catalogue_manifest_path, { workflow_name: 'gztt;echo bad' })
+        }.to raise_error(Bajor::Client::Error, 'workflow_name contains unsupported characters')
+      end
+
+      it 'rejects non-integer n_blocks values' do
+        expect {
+          bajor_client.create_training_job(catalogue_manifest_path, { n_blocks: '1;echo bad' })
+        }.to raise_error(Bajor::Client::Error, 'n_blocks must be a positive integer')
+      end
+
+      it 'rejects non-numeric fixed_crop values' do
+        unsafe_fixed_crop = {
+          lower_left_x: "1';echo bad",
+          lower_left_y: 20,
+          upper_right_x: 700,
+          upper_right_y: 710
+        }
+
+        expect {
+          bajor_client.create_training_job(catalogue_manifest_path, { fixed_crop: unsafe_fixed_crop })
+        }.to raise_error(Bajor::Client::Error, 'fixed_crop.lower_left_x must be numeric')
+      end
+
+      it 'allows flexible fixed_crop keys with numeric values' do
+        flexible_fixed_crop = {
+          center_x: 120,
+          center_y: 130,
+          radius: 42
+        }
+
+        expected_body = build_expected_body(
+          manifest_path: catalogue_manifest_path,
+          workflow_name: workflow_name,
+          fixed_crop: flexible_fixed_crop
+        )
+        stub_request(:post, request_url)
+          .with(
+            body: expected_body.to_json,
+            headers: request_headers
+          )
+          .to_return(status: 201, body: bajor_response_body.to_json, headers: { content_type: 'application/json' })
+
+        bajor_client.create_training_job(catalogue_manifest_path, { fixed_crop: flexible_fixed_crop })
+
+        expect(
+          a_request(:post, request_url).with(body: expected_body, headers: request_headers)
+        ).to have_been_made.once
+      end
+
+      it 'rejects unsafe fixed_crop keys' do
+        unsafe_fixed_crop = {
+          "center_x';echo bad" => 120,
+          center_y: 130,
+          radius: 42
+        }
+
+        expect {
+          bajor_client.create_training_job(catalogue_manifest_path, { fixed_crop: unsafe_fixed_crop })
+        }.to raise_error(Bajor::Client::Error, "fixed_crop.center_x';echo bad contains unsupported characters")
+      end
+
+      it 'rejects invalid custom_schema_json' do
+        expect {
+          bajor_client.create_training_job(catalogue_manifest_path, { custom_schema_json: '{"bad":' })
+        }.to raise_error(Bajor::Client::Error, /custom_schema_json must be valid JSON/)
+      end
     end
 
     context 'with jswt_cosmos workflow and fixed crop' do

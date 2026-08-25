@@ -16,9 +16,11 @@ module Batch
       def build(context, mode:)
         metadata = context.metadata.is_a?(Hash) ? context.metadata : {}
         batch_config = metadata['batch'].is_a?(Hash) ? metadata['batch'] : {}
+        custom_schema = LabelExtractors::Registry.custom_schema(context.module_name, context.extractor_name)
 
         {
           workflow_name: context.extractor_name,
+          custom_schema_json: custom_schema&.to_json,
           fixed_crop: batch_config['fixed_crop'] || metadata['fixed_crop'],
           n_blocks: batch_config['n_blocks'] || metadata['n_blocks'],
           container_image_name: batch_config['container_image_name'],
