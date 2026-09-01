@@ -195,7 +195,7 @@ GEM
       racc (~> 1.4)
     nokogiri (1.16.4-x86_64-linux)
       racc (~> 1.4)
-    panoptes-client (1.2.0)
+    panoptes-client (1.2.1)
       deprecate
       faraday
       faraday-panoptes (~> 0.3)
