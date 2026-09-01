@@ -10,8 +10,10 @@ module Bajor
 
     JSON_HEADERS = { 'Content-Type' => 'application/json', 'Accept' => 'application/json' }.freeze
     DEFAULT_OPTIONS = { workflow_name: 'cosmic_dawn' }.freeze
+    SAFE_ARGUMENT_VALUE = /\A[a-zA-Z0-9][a-zA-Z0-9_-]*\z/
     BATCH_OPTION_KEYS = %i[
       workflow_name
+      custom_schema_json
       fixed_crop
       n_blocks
       container_image_name
@@ -153,6 +155,8 @@ module Bajor
       DEFAULT_OPTIONS
       .merge(overrides)
       .compact.tap do |o|
+        validate_batch_option_values!(o)
+
         run_opts = []
         run_opts << "--schema #{o[:workflow_name].downcase}" if include_schema
         if o[:fixed_crop].present?
@@ -165,6 +169,44 @@ module Bajor
         end
         o[:run_opts] = run_opts.join(' ') if run_opts.any?
       end
+    end
+
+    def validate_batch_option_values!(opts)
+      validate_safe_argument_value!(opts[:workflow_name], 'workflow_name') if opts[:workflow_name].present?
+      validate_positive_integer!(opts[:n_blocks], 'n_blocks') if opts[:n_blocks].present?
+      validate_fixed_crop!(opts[:fixed_crop]) if opts[:fixed_crop].present?
+      validate_custom_schema_json!(opts[:custom_schema_json]) if opts[:custom_schema_json].present?
+    end
+
+    def validate_safe_argument_value!(value, key)
+      return if value.is_a?(String) && value.match?(SAFE_ARGUMENT_VALUE)
+
+      raise Error, "#{key} contains unsupported characters"
+    end
+
+    def validate_positive_integer!(value, key)
+      return if value.is_a?(Integer) && value.positive?
+
+      raise Error, "#{key} must be a positive integer"
+    end
+
+    def validate_fixed_crop!(value)
+      fixed_crop = value.respond_to?(:to_h) ? value.to_h.symbolize_keys : nil
+      raise Error, 'fixed_crop must be an object' unless fixed_crop
+
+      fixed_crop.each do |key, _value|
+        validate_safe_argument_value!(key.to_s, "fixed_crop.#{key}")
+      end
+
+      fixed_crop.each do |key, _value|
+        raise Error, "fixed_crop.#{key} must be numeric" unless fixed_crop[key].is_a?(Numeric)
+      end
+    end
+
+    def validate_custom_schema_json!(value)
+      JSON.parse(value)
+    rescue JSON::ParserError => e
+      raise Error, "custom_schema_json must be valid JSON: #{e.message}"
     end
   end
 end

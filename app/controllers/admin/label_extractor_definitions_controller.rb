@@ -53,16 +53,21 @@ module Admin
         :module_name,
         :extractor_name,
         :enabled,
+        :build_custom_schema,
         :config_json
       )
     end
 
     def definition_attributes
+      config = parse_json_field(definition_form_params[:config_json], field_name: 'config')
+      config.delete(LabelExtractors::ConfigurableExtractor::CUSTOM_SCHEMA_FLAG)
+      config[LabelExtractors::ConfigurableExtractor::CUSTOM_SCHEMA_FLAG] = true if build_custom_schema?
+
       {
         module_name: definition_form_params[:module_name],
         extractor_name: definition_form_params[:extractor_name],
         enabled: truthy?(definition_form_params[:enabled]),
-        config: parse_json_field(definition_form_params[:config_json], field_name: 'config')
+        config: config
       }
     end
 
@@ -76,6 +81,10 @@ module Admin
       ActiveModel::Type::Boolean.new.cast(value)
     end
 
+    def build_custom_schema?
+      truthy?(definition_form_params[:build_custom_schema])
+    end
+
     def prepare_form_state
       @definition ||= params[:id] ? LabelExtractorDefinition.find(params[:id]) : LabelExtractorDefinition.new(enabled: true)
       @return_to = resolved_return_to
@@ -87,6 +96,7 @@ module Admin
         enabled: truthy?(definition_form_params[:enabled])
       )
       @config_json_value = definition_form_params[:config_json]
+      @build_custom_schema_value = build_custom_schema?
     end
 
     def resolved_return_to

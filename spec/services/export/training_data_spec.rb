@@ -91,6 +91,23 @@ RSpec.describe Export::TrainingData do
           %w[id_str file_loc smooth-or-featured-np_smooth]
         )
       end
+
+      it 'uses custom schema label headers without the data release suffix' do
+        LabelExtractorDefinition.find_by(module_name: 'new_project', extractor_name: 'main').update!(
+          config: {
+            build_custom_schema: true,
+            task_key_label_prefixes: { T0: 'smooth-or-featured' },
+            task_key_data_labels: { T0: { '0': 'smooth' } }
+          }
+        )
+
+        export_service_instance.run
+
+        expect(Format::TrainingDataCsv).to have_received(:new).with(
+          workflow_id,
+          %w[id_str file_loc smooth-or-featured_smooth]
+        )
+      end
     end
   end
 end

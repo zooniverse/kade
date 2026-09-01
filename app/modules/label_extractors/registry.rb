@@ -48,6 +48,15 @@ module LabelExtractors
         raise Finder::UnknownExtractor, "no extractor class found for '#{module_name}_#{extractor_name}'"
       end
 
+      def custom_schema(module_name, extractor_name)
+        return if extractor_class_for(module_name, extractor_name)
+
+        definition = LabelExtractorDefinition.find_enabled(module_name, extractor_name)
+        return unless definition
+
+        ConfigurableExtractor.custom_schema(definition.config)
+      end
+
       def code_extractors
         @code_extractors ||= DEFAULT_CODE_EXTRACTORS.dup
       end
