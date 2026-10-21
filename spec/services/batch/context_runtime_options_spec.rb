@@ -6,6 +6,25 @@ RSpec.describe Batch::ContextRuntimeOptions do
   fixtures :contexts
 
   let(:context) { contexts(:galaxy_zoo_cosmos_active_learning_project) }
+
+  it 'includes context Hugging Face options in training and prediction' do
+    context.metadata = {
+      'batch' => {
+        'huggingface_checkpoint_filename' => 'checkpoints/best.ckpt'
+      }
+    }
+    expected = {
+      huggingface_checkpoint_filename: 'checkpoints/best.ckpt'
+    }
+    expect(described_class.for_training(context)).to include(expected)
+    expect(described_class.for_prediction(context)).to include(expected)
+  end
+
+  it 'omits Hugging Face options when not configured' do
+    context.metadata = {}
+    expect(described_class.for_training(context)).not_to have_key(:huggingface_checkpoint_filename)
+    expect(described_class.for_prediction(context)).not_to have_key(:huggingface_checkpoint_filename)
+  end
   context 'when a DB-backed extractor builds the custom schema' do
     let(:context) do
       Context.create!(

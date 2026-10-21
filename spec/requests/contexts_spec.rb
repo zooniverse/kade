@@ -148,6 +148,21 @@ RSpec.describe 'Contexts', type: :request do
       expect(json_parsed_response_body.dig('metadata', 'batch', 'pretrained_checkpoint_url')).to eq('staging-euclid-zoobot.ckpt')
     end
 
+    it 'persists Hugging Face configuration in context metadata' do
+      config = { huggingface_checkpoint_filename: 'checkpoints/best.ckpt' }
+      patch(path, params: { metadata: { batch: config } }.to_json, headers: request_headers)
+
+      expect(response).to have_http_status(:ok)
+      expect(context.reload.metadata['batch']).to include(config.stringify_keys)
+    end
+
+    it 'rejects repository configuration in context batch metadata' do
+      patch(path, params: { metadata: { batch: { huggingface_repo_id: 'zooniverse/workflow-model' } } }.to_json, headers: request_headers)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(json_parsed_response_body['errors'].first['detail']).to include('Unsupported batch runtime config keys')
+    end
+
     it 'rejects unsupported top-level patch keys' do
       patch(
         path,

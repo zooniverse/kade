@@ -27,7 +27,8 @@ module Batch
           training_script_path: batch_config['training_script_path'],
           prediction_script_path: batch_config['prediction_script_path'],
           promote_script_path: batch_config['promote_script_path'],
-          pretrained_checkpoint_url: batch_config['pretrained_checkpoint_url']
+          pretrained_checkpoint_url: batch_config['pretrained_checkpoint_url'],
+          huggingface_checkpoint_filename: batch_config['huggingface_checkpoint_filename']
         }.compact.tap do |opts|
           if mode == :training
             opts.delete(:prediction_script_path)

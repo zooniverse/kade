@@ -17,6 +17,7 @@ module Batch
         fixed_crop
         n_blocks
         pretrained_checkpoint_url
+        huggingface_checkpoint_filename
       ]
     ).freeze
     FIXED_CROP_KEYS = %w[

@@ -181,6 +181,28 @@ Upon receipt of the payload, validate the following technical requirements:
 
 KaDE is configured to return a `422 Unprocessable Entity` response if batch metadata fails these validation criteria.
 
+### Hugging Face Checkpoints
+
+Configure a context's checkpoint filename for both training and prediction in BaJoR's deployment-configured Hugging Face repository:
+
+```json
+{
+  "metadata": {
+    "batch": {
+      "huggingface_checkpoint_filename": "checkpoints/best.ckpt"
+    }
+  }
+}
+```
+
+Use the exact filename or path inside the model repository so training and prediction select the same checkpoint. When omitted, each script uses the basename of its existing checkpoint path. Hugging Face handles filename and file-existence errors during download.
+
+Set `HF_REPO_ID` and `HF_TOKEN` in BaJoR's deployment environment. KaDE does not configure or pass a repository ID. Hugging Face downloads and uploads require both settings, including for public repositories. If either is missing, checkpoints continue to come from the mounted models container and Hub uploads are skipped. Do not put credentials in context metadata.
+
+The checkpoint must be compatible with the existing Zoobot checkpoint loader, rather than an arbitrary Transformers model. The existing training script also uploads the best trained checkpoint to the same repository and filename when both Hugging Face settings are configured, so use a workflow-owned repository with write access. Training continues to promote results to Azure storage. Download errors are reported; the existing custom-schema training behavior may initialize a fresh Zoobot model when a checkpoint is missing.
+
+Deploy the BaJoR API changes and updated batch scripts to the training/prediction code storage before enabling these options in KaDE contexts.
+
 ## Caesar Integration and Reduction Transmission
 
 The target workflow must be instantiated within Caesar prior to configuration. The provided setup utility is designed to provision extractors, reducers, and subject rules for existing workflows rather than creating them from scratch.
