@@ -21,6 +21,7 @@ module Bajor
       prediction_script_path
       promote_script_path
       pretrained_checkpoint_url
+      huggingface_checkpoint_filename
     ].freeze
 
     include HTTParty

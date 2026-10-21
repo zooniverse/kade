@@ -33,6 +33,24 @@ RSpec.describe Bajor::Client do
   let(:bajor_host) { 'https://bajor.zooniverse.org' }
   let(:run_opts) { '--schema cosmic_dawn' }
   let(:workflow_name) { 'cosmic_dawn' }
+
+  it 'sends structured Hugging Face options for training and prediction' do
+    options = {
+      huggingface_checkpoint_filename: 'checkpoints/best.ckpt'
+    }
+    training = stub_request(:post, "#{bajor_host}/training/jobs/")
+      .with(body: { manifest_path: 'manifest.csv', opts: options.merge(workflow_name: 'cosmic_dawn', run_opts: '--schema cosmic_dawn') })
+      .to_return(status: 201, body: { id: 'training-id' }.to_json, headers: { content_type: 'application/json' })
+    prediction = stub_request(:post, "#{bajor_host}/prediction/jobs/")
+      .with(body: { manifest_url: 'https://example.com/manifest.json', opts: options.merge(workflow_name: 'cosmic_dawn') })
+      .to_return(status: 201, body: { id: 'prediction-id' }.to_json, headers: { content_type: 'application/json' })
+
+    bajor_client.create_training_job('manifest.csv', options)
+    bajor_client.create_prediction_job('https://example.com/manifest.json', options)
+
+    expect(training).to have_been_requested.once
+    expect(prediction).to have_been_requested.once
+  end
   let(:request_headers) do
     {
       'Accept' => 'application/json',
