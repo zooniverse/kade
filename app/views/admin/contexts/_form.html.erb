@@ -14,8 +14,13 @@
         <%= form.number_field :active_subject_set_id, class: 'form-control' %>
       </div>
       <div class="form-group">
+        <%= form.label :prediction_source %>
+        <%= form.select :prediction_source, %w[panoptes_subject_set azure_catalogue], {}, class: 'form-control' %>
+      </div>
+      <div class="form-group">
         <%= form.label :pool_subject_set_id %>
         <%= form.number_field :pool_subject_set_id, class: 'form-control' %>
+        <p class="help-block">Optional for Azure catalogues. Discover images with candidate_pool:sync, start predictions with candidate_pool:predict, and configure selection in Metadata JSON.</p>
       </div>
       <div class="form-group">
         <%= form.label :module_name %>

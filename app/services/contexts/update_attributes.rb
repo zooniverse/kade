@@ -11,6 +11,7 @@ module Contexts
       pool_subject_set_id
       module_name
       extractor_name
+      prediction_source
     ].freeze
     INTEGER_ATTRIBUTE_KEYS = %w[
       workflow_id
@@ -94,6 +95,7 @@ module Contexts
 
     def validate_integer_param!(key)
       value = params[key]
+      return if key == 'pool_subject_set_id' && value.blank?
       return if value.is_a?(Integer)
       return if value.is_a?(String) && value.match?(/\A\d+\z/)
 

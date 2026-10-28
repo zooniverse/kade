@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class PredictionJob < ApplicationRecord
+  belongs_to :context, optional: true
+
   validates :manifest_url, presence: true
   validates :state, inclusion: { in: %w[pending submitted failed completed], allow_nil: true }
 

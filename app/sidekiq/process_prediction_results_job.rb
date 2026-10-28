@@ -5,6 +5,10 @@ class ProcessPredictionResultsJob
 
   def perform(prediction_job_id)
     prediction_job = PredictionJob.find(prediction_job_id)
+    if prediction_job.catalogue_snapshot
+      CandidatePool::ProcessResults.new(prediction_job).run
+      return
+    end
     # use the prediction job values but allow them to be injected independently for flexibility
     prediction_results_process_service = PredictionResults::Process.new(
       results_url: prediction_job.results_url,

@@ -17,19 +17,28 @@ class PredictionManifestExportJob
     # ideally we'd add a PredictionExport resource model to track the creation
     # and some smarts here to re-use an existing, recent manifest (perhaps 12 hours?)
     # to avoid reprocessing the same data if we have a job failure (creation / submissione etc)
-    export_manifest_service = Batch::Prediction::ExportManifest.new(context.pool_subject_set_id)
+    export_manifest_service = if context.azure_catalogue?
+                                CandidatePool::ExportManifest.new(context)
+                              else
+                                Batch::Prediction::ExportManifest.new(context.pool_subject_set_id)
+                              end
     export_manifest_service.run
 
     # create a prediction job resource
     begin
-      prediction_job = PredictionJob.create!(
-        prediction_job_params(
-          # use the context's active subject set as the target for prediction results processing, i.e. add/remove subjects from this set
-          context.active_subject_set_id,
-          # use the newly minted manifest url from the export manifest service
-          export_manifest_service.manifest_url
-        )
+      attributes = prediction_job_params(
+        context.active_subject_set_id,
+        export_manifest_service.manifest_url
       )
+      if context.azure_catalogue?
+        snapshot = export_manifest_service.snapshot
+        attributes.merge!(
+          context_id: context.id, catalogue_snapshot: snapshot,
+          probability_threshold: snapshot.fetch('selection').fetch('probability_threshold'),
+          randomisation_factor: snapshot.fetch('selection').fetch('randomisation_factor')
+        )
+      end
+      prediction_job = PredictionJob.create!(attributes)
     rescue StandardError => e
       Honeybadger.notify(
         e,

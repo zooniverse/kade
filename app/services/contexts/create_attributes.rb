@@ -68,6 +68,7 @@ module Contexts
       ]
 
       missing = required_keys.select { |key| params[key].blank? }
+      missing.delete('pool_subject_set_id') if params['prediction_source'] == 'azure_catalogue'
       raise ValidationError, "missing required context fields: #{missing.join(', ')}" if missing.any?
     end
 
@@ -79,6 +80,7 @@ module Contexts
 
     def validate_integer_param!(key)
       value = params[key]
+      return if key == 'pool_subject_set_id' && value.blank?
       return if value.is_a?(Integer)
       return if value.is_a?(String) && value.match?(/\A\d+\z/)
 

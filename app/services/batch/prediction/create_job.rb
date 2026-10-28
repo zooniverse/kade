@@ -27,7 +27,7 @@ module Batch
 
       private
       def prediction_options
-        context = Context.find_by(active_subject_set_id: prediction_job.subject_set_id)
+        context = prediction_job.context || Context.find_by(active_subject_set_id: prediction_job.subject_set_id)
         return {} unless context
 
         Batch::ContextRuntimeOptions.for_prediction(context)
