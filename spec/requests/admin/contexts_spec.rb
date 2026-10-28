@@ -88,6 +88,20 @@ RSpec.describe 'Admin::Contexts', type: :request do
     expect(response.body).to include('data-json-editor="true"')
   end
 
+  it 'creates an Azure context with an empty pool field from the admin form' do
+    post '/admin/contexts', params: { context: {
+      workflow_id: 9999, project_id: 9999, active_subject_set_id: 9999,
+      pool_subject_set_id: '', prediction_source: 'azure_catalogue',
+      module_name: 'galaxy_zoo', extractor_name: 'cosmic_dawn',
+      metadata_json: { selection: { probability_threshold: 0.7 } }.to_json
+    } }, headers: request_headers
+
+    expect(response).to have_http_status(:redirect)
+    created = Context.find_by!(workflow_id: 9999)
+    expect(created).to be_azure_catalogue
+    expect(created.pool_subject_set_id).to be_nil
+  end
+
   it 'renders the admin context detail page' do
     get "/admin/contexts/#{context.id}", headers: request_headers
 

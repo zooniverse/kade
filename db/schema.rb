@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_04_22_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_10_22_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -42,16 +42,30 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_22_000000) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "candidate_subjects", force: :cascade do |t|
+    t.bigint "context_id", null: false
+    t.string "external_id", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.jsonb "locations", default: [], null: false
+    t.bigint "zooniverse_subject_id"
+    t.datetime "registration_started_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["context_id", "external_id"], name: "index_candidate_subjects_on_context_id_and_external_id", unique: true
+    t.index ["context_id"], name: "index_candidate_subjects_on_context_id"
+  end
+
   create_table "contexts", force: :cascade do |t|
     t.bigint "workflow_id", null: false
     t.bigint "project_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "active_subject_set_id", null: false
-    t.bigint "pool_subject_set_id", null: false
+    t.bigint "pool_subject_set_id"
     t.string "module_name"
     t.string "extractor_name"
     t.jsonb "metadata"
+    t.string "prediction_source", default: "panoptes_subject_set", null: false
     t.index ["workflow_id", "project_id"], name: "index_contexts_on_workflow_id_and_project_id", unique: true
   end
 
@@ -76,6 +90,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_22_000000) do
     t.bigint "subject_set_id", null: false
     t.float "probability_threshold", null: false
     t.float "randomisation_factor", null: false
+    t.bigint "context_id"
+    t.jsonb "catalogue_snapshot"
+    t.jsonb "selection"
+    t.datetime "applied_at"
+    t.index ["context_id"], name: "index_prediction_jobs_on_context_id"
   end
 
   create_table "predictions", force: :cascade do |t|
@@ -136,5 +155,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_22_000000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "candidate_subjects", "contexts"
+  add_foreign_key "prediction_jobs", "contexts"
   add_foreign_key "subjects", "contexts"
 end

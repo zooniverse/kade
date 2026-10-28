@@ -33,5 +33,14 @@ RSpec.describe ProcessPredictionResultsJob, type: :job do
       )
       expect(prediction_results_process_service_double).to have_received(:run)
     end
+
+    it 'dispatches catalogue snapshots to the candidate result processor' do
+      prediction_job.update!(catalogue_snapshot: { 'project_id' => 1 })
+      processor = instance_double(CandidatePool::ProcessResults, run: nil)
+      allow(CandidatePool::ProcessResults).to receive(:new).with(prediction_job).and_return(processor)
+      job.perform(prediction_job.id)
+      expect(processor).to have_received(:run)
+      expect(PredictionResults::Process).not_to have_received(:new)
+    end
   end
 end

@@ -113,7 +113,7 @@ RSpec.describe 'PredictionJobs', type: :request do
 
     it 'serailizes the created prediction job in the response body as json' do
       create_request
-      expected_attributes = %w[created_at id manifest_url message results_url service_job_url state probability_threshold randomisation_factor subject_set_id updated_at]
+      expected_attributes = %w[created_at id manifest_url message results_url service_job_url state probability_threshold randomisation_factor subject_set_id updated_at context_id catalogue_snapshot selection applied_at]
       expect(json_parsed_response_body.keys).to match_array(expected_attributes)
     end
 

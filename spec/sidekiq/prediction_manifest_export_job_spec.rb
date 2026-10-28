@@ -10,7 +10,7 @@ RSpec.describe PredictionManifestExportJob, type: :job do
     let(:context) { Context.first }
     let(:active_subject_set_id) { context.active_subject_set_id }
     let(:pool_subject_set_id) { context.pool_subject_set_id }
-    let(:context_double) { instance_double(Context, active_subject_set_id: active_subject_set_id, pool_subject_set_id: pool_subject_set_id) }
+    let(:context_double) { instance_double(Context, active_subject_set_id: active_subject_set_id, pool_subject_set_id: pool_subject_set_id, azure_catalogue?: false) }
     let(:job) { described_class.new }
 
     before do

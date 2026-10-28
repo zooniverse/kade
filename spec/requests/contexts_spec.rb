@@ -15,6 +15,39 @@ RSpec.describe 'Contexts', type: :request do
 
   describe 'PATCH /contexts/:id' do
     let(:path) { "/contexts/#{context.id}" }
+
+    it 'switches to an Azure catalogue without retaining a Panoptes pool set' do
+      patch path, params: {
+        prediction_source: 'azure_catalogue', pool_subject_set_id: nil,
+        metadata: { selection: { probability_threshold: 0.6 } }
+      }.to_json, headers: request_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(context.reload).to be_azure_catalogue
+      expect(context.pool_subject_set_id).to be_nil
+      expect(context.metadata.dig('selection', 'probability_threshold')).to eq(0.6)
+    end
+
+    it 'rejects invalid Azure scoring configuration without changing the context' do
+      patch path, params: {
+        prediction_source: 'azure_catalogue', metadata: { selection: { probability_threshold: 1.1 } }
+      }.to_json, headers: request_headers
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(context.reload.prediction_source).to eq('panoptes_subject_set')
+    end
+
+    it 'switches to Azure discovery while preserving existing batch settings' do
+      original_batch = context.metadata.fetch('batch')
+      patch path, params: {
+        prediction_source: 'azure_catalogue'
+      }.to_json, headers: request_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(context.reload).to be_azure_catalogue
+      expect(context.metadata['batch']).to eq(original_batch)
+    end
+
     let(:runtime_config) do
       {
         container_image_name: 'zoobot.azurecr.io/pytorch:custom-euclid',
